@@ -4,7 +4,11 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 sealed class Route {
+    // @Serializable 让路由参数能被 Navigation 自动序列化
     @Serializable
+    // data object : 一个唯一的、不需要传参的、但需要具备数据类特性（如方便打印、比较）的单例对象
+    // data 告诉这个类，主要作用就是存数据，实现更多方法，toString()，equals()，hashCode()，copy()等等
+    // data 在这里加 data 是为了让编译器帮我们生成标准的“身份识别”能力，让导航系统能准确地认出它
     data object Login : Route() {
         @Serializable
         data object SMS : Route()
