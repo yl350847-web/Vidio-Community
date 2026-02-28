@@ -10,21 +10,24 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.tototo.video_community.nav.AppNav
 import com.tototo.video_community.ui.theme.VideoCommunityTheme
+import com.tototo.video_community.ui.viewmodel.SharedViewModel
+import org.koin.compose.koinInject
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // 让 App 的内容绘制到状态栏（显示时间的地方）和导航栏（底部返回键的地方）后面
-        enableEdgeToEdge()
         setContent {
             MaterialTheme {
-                // 包裹在这里面的所有组件，都会自动继承上面定义的风格
-                // Jetpack Compose 的标准范式,所有的 UI 必须包裹在主题组件内
-                AppNav()
+                val sharedViewModel = koinInject<SharedViewModel>()
+                val appState by sharedViewModel.appState.collectAsState()
+                AppNav(appState)
             }
         }
     }
