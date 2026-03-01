@@ -1,60 +1,190 @@
 package com.tototo.video_community.features.main
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Person
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Subscriptions
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.tototo.video_community.features.main.home.HomeScreen
 import com.tototo.video_community.features.main.navigation.MainRoute
+import com.tototo.video_community.features.main.profile.ProfileScreen
+import com.tototo.video_community.features.main.subscription.SubscriptionScreen
+import com.tototo.video_community.nav.AppRoute
+
+private data class BottomNavItem(
+    val route: String,
+    val label: String,
+    val icon: ImageVector
+)
 
 @Composable
-fun MainNav() {
+fun MainNav(
+    appNavigateTo: (String) -> Unit
+) {
     val navController = rememberNavController()
     val currentBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStackEntry?.destination?.route
 
-    Column(Modifier.fillMaxSize()) {
-        Box(Modifier.weight(1f)) {
-            MainNavHost(navController)
-        }
+    val items = listOf(
+        BottomNavItem(MainRoute.Home, "首页", Icons.Rounded.Home),
+        BottomNavItem(MainRoute.Subscription, "订阅", Icons.Rounded.Subscriptions),
+        BottomNavItem(MainRoute.Profile, "我的", Icons.Rounded.Person)
+    )
+    // 当用户旋转屏幕或调整窗口大小时when 语句会重新判断，自动切换到新的布局
+    val configuration = LocalConfiguration.current
+    val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+    val width = configuration.screenWidthDp
+    val isDesktop = width >= 840
+    val isTablet = width in 600..839
 
-        NavigationBar {
-            NavigationBarItem(
-                selected = currentRoute == MainRoute.Home,
-                onClick = { navController.navigate(MainRoute.Home) },
-                icon = { Icon(Icons.Rounded.Home, null) },
-                label = { Text("首页") }
+    when {
+        isDesktop || (!isPortrait && isTablet) -> {
+            DesktopOrTabletContent(
+                navController = navController,
+                items = items,
+                currentRoute = currentRoute,
+                onSearchClick = { appNavigateTo(AppRoute.Search) },
+                onNavigate = { route -> navController.navigate(route) }
             )
-            NavigationBarItem(
-                selected = currentRoute == MainRoute.Subscription,
-                onClick = { navController.navigate(MainRoute.Subscription) },
-                icon = { Icon(Icons.Rounded.Subscriptions, null) },
-                label = { Text("订阅") }
+        }
+        isPortrait -> {
+            PortraitContent(
+                navController = navController,
+                items = items,
+                currentRoute = currentRoute,
+                onSearchClick = { appNavigateTo(AppRoute.Search) },
+                onNavigate = { route -> navController.navigate(route) }
             )
-            NavigationBarItem(
-                selected = currentRoute == MainRoute.Profile,
-                onClick = { navController.navigate(MainRoute.Profile) },
-                icon = { Icon(Icons.Rounded.Person, null) },
-                label = { Text("我的") }
+        }
+        else -> {
+            LandscapeContent(
+                navController = navController,
+                items = items,
+                currentRoute = currentRoute,
+                onSearchClick = { appNavigateTo(AppRoute.Search) },
+                onNavigate = { route -> navController.navigate(route) }
             )
         }
     }
+}
+
+@Composable
+private fun PortraitContent(
+    navController: NavHostController,
+    items: List<BottomNavItem>,
+    currentRoute: String?,
+    onSearchClick: () -> Unit,
+    onNavigate: (String) -> Unit
+) {
+    Column(Modifier.fillMaxSize()) {
+        TopBar(onSearchClick)
+        Box(Modifier.weight(1f)) {
+            MainNavHost(navController)
+        }
+        NavigationBar {
+            items.forEach { item ->
+                NavigationBarItem(
+                    selected = currentRoute == item.route,
+                    onClick = { onNavigate(item.route) },
+                    icon = { Icon(item.icon, null) },
+                    label = { Text(item.label) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun LandscapeContent(
+    navController: NavHostController,
+    items: List<BottomNavItem>,
+    currentRoute: String?,
+    onSearchClick: () -> Unit,
+    onNavigate: (String) -> Unit
+) {
+    Column(Modifier.fillMaxSize()) {
+        TopBar(onSearchClick)
+        Row(Modifier.weight(1f)) {
+            SideNavigateRail(items, currentRoute, onNavigate)
+            Box(Modifier.fillMaxSize()) {
+                MainNavHost(navController)
+            }
+        }
+    }
+}
+
+@Composable
+private fun DesktopOrTabletContent(
+    navController: NavHostController,
+    items: List<BottomNavItem>,
+    currentRoute: String?,
+    onSearchClick: () -> Unit,
+    onNavigate: (String) -> Unit
+) {
+    Column(Modifier.fillMaxSize()) {
+        TopBar(onSearchClick)
+        Row(Modifier.weight(1f)) {
+            SideNavigateRail(items, currentRoute, onNavigate)
+            Box(Modifier.fillMaxSize()) {
+                MainNavHost(navController)
+            }
+        }
+    }
+}
+
+@Composable
+private fun SideNavigateRail(
+    items: List<BottomNavItem>,
+    currentRoute: String?,
+    onNavigate: (String) -> Unit
+) {
+    NavigationRail {
+        items.forEach { item ->
+            NavigationRailItem(
+                selected = currentRoute == item.route,
+                onClick = { onNavigate(item.route) },
+                icon = { Icon(item.icon, null) },
+                label = { Text(item.label) }
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun TopBar(onSearchClick: () -> Unit) {
+    TopAppBar(
+        title = { Text("BiliTube") },
+        actions = {
+            IconButton(onClick = onSearchClick) {
+                Icon(Icons.Rounded.Search, contentDescription = null)
+            }
+        }
+    )
 }
 
 @Composable
@@ -66,26 +196,5 @@ private fun MainNavHost(navController: NavHostController) {
         composable(MainRoute.Home) { HomeScreen() }
         composable(MainRoute.Subscription) { SubscriptionScreen() }
         composable(MainRoute.Profile) { ProfileScreen() }
-    }
-}
-
-@Composable
-private fun HomeScreen() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Home", style = MaterialTheme.typography.headlineMedium)
-    }
-}
-
-@Composable
-private fun SubscriptionScreen() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Subscription", style = MaterialTheme.typography.headlineMedium)
-    }
-}
-
-@Composable
-private fun ProfileScreen() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("Profile", style = MaterialTheme.typography.headlineMedium)
     }
 }

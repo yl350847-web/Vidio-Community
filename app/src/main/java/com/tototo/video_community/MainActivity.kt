@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
 import com.tototo.video_community.nav.AppNav
 import com.tototo.video_community.ui.theme.VideoCommunityTheme
 import com.tototo.video_community.ui.viewmodel.SharedViewModel
@@ -27,7 +28,13 @@ class MainActivity : ComponentActivity() {
             MaterialTheme {
                 val sharedViewModel = koinInject<SharedViewModel>()
                 val appState by sharedViewModel.appState.collectAsState()
-                AppNav(appState)
+
+                val navController = rememberNavController()
+
+                AppNav(
+                    appNavController = navController,
+                    appState = appState
+                )
             }
         }
     }
