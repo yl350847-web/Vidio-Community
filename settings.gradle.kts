@@ -17,14 +17,32 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        // 阿里云 Google 镜像 (加速 AndroidX, Google Play Services 等)
-        maven { url = uri("https://maven.aliyun.com/repository/google") }
-        // 阿里云公共镜像 (加速 Maven Central)
-        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        // 阿里云 Google 镜像，只代理 Google 相关依赖
+        maven {
+            url = uri("https://maven.aliyun.com/repository/google")
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }
+        }
+        // 阿里云公共镜像，代理 Maven Central 及大部分其他依赖
+        maven {
+            url = uri("https://maven.aliyun.com/repository/public")
+            content {
+                // 排除 Google 相关组，避免与上面的阿里云 Google 镜像冲突
+                excludeGroupByRegex("com\\.android.*")
+                excludeGroupByRegex("com\\.google.*")
+                excludeGroupByRegex("androidx.*")
+            }
+        }
+        // 官方 Google 仓库（后备）
         google()
+        // 官方 Maven Central（后备）
         mavenCentral()
     }
 }

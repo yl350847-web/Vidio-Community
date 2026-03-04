@@ -5,9 +5,7 @@ plugins {
 
 android {
     namespace = "com.tototo.video_community"
-    compileSdk {
-        version = release(36)
-    }
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.tototo.video_community"
@@ -29,8 +27,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
         compose = true
@@ -38,25 +36,38 @@ android {
 }
 
 dependencies {
+    // --- Android Core ---
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+
+    // --- Compose BOM ---
     implementation(platform(libs.androidx.compose.bom))
-    implementation("androidx.navigation:navigation-compose:2.9.5")
-    implementation("androidx.compose.material3:material3")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
-    implementation("androidx.compose.material:material-icons-extended:1.7.8")
-    implementation(libs.androidx.material.icons.extended)
-    implementation(libs.androidx.navigation.compose)
-    implementation(libs.androidx.compose.material.icons.extended)
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
 
+    // --- Material 3 & Icons ---
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.material.icons.extended)  // 注意：这里应使用 androidx-compose-material-icons-extended
+
+    // --- Lifecycle & ViewModel ---
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+
+    // --- Navigation ---
+    implementation(libs.androidx.navigation.compose)
+
+    // --- Koin (DI) ---
     implementation(libs.koin.android)
     implementation(libs.koin.androidx.compose)
 
+    // --- Coil 3 (图片加载) ---
+    implementation(libs.bundles.coil)
+
+    // --- OkHttp (Coil 网络底层) ---
+    // 已由 coil-network-okhttp 传递依赖，无需显式添加
+
+    // --- Testing ---
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

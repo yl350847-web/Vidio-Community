@@ -54,12 +54,14 @@ fun MainNav(
         BottomNavItem(MainRoute.Subscription, "订阅", Icons.Rounded.Subscriptions),
         BottomNavItem(MainRoute.Profile, "我的", Icons.Rounded.Person)
     )
-    // 当用户旋转屏幕或调整窗口大小时when 语句会重新判断，自动切换到新的布局
+
     val configuration = LocalConfiguration.current
     val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
     val width = configuration.screenWidthDp
     val isDesktop = width >= 840
     val isTablet = width in 600..839
+
+    val onSearchClick = { appNavigateTo(AppRoute.Search) }
 
     when {
         isDesktop || (!isPortrait && isTablet) -> {
@@ -67,7 +69,7 @@ fun MainNav(
                 navController = navController,
                 items = items,
                 currentRoute = currentRoute,
-                onSearchClick = { appNavigateTo(AppRoute.Search) },
+                onSearchClick = onSearchClick,
                 onNavigate = { route -> navController.navigate(route) }
             )
         }
@@ -76,7 +78,7 @@ fun MainNav(
                 navController = navController,
                 items = items,
                 currentRoute = currentRoute,
-                onSearchClick = { appNavigateTo(AppRoute.Search) },
+                onSearchClick = onSearchClick,
                 onNavigate = { route -> navController.navigate(route) }
             )
         }
@@ -85,7 +87,7 @@ fun MainNav(
                 navController = navController,
                 items = items,
                 currentRoute = currentRoute,
-                onSearchClick = { appNavigateTo(AppRoute.Search) },
+                onSearchClick = onSearchClick,
                 onNavigate = { route -> navController.navigate(route) }
             )
         }
@@ -103,7 +105,10 @@ private fun PortraitContent(
     Column(Modifier.fillMaxSize()) {
         TopBar(onSearchClick)
         Box(Modifier.weight(1f)) {
-            MainNavHost(navController)
+            MainNavHost(
+                navController = navController,
+                onNavigateToSearch = onSearchClick
+            )
         }
         NavigationBar {
             items.forEach { item ->
@@ -131,7 +136,10 @@ private fun LandscapeContent(
         Row(Modifier.weight(1f)) {
             SideNavigateRail(items, currentRoute, onNavigate)
             Box(Modifier.fillMaxSize()) {
-                MainNavHost(navController)
+                MainNavHost(
+                    navController = navController,
+                    onNavigateToSearch = onSearchClick
+                )
             }
         }
     }
@@ -150,7 +158,10 @@ private fun DesktopOrTabletContent(
         Row(Modifier.weight(1f)) {
             SideNavigateRail(items, currentRoute, onNavigate)
             Box(Modifier.fillMaxSize()) {
-                MainNavHost(navController)
+                MainNavHost(
+                    navController = navController,
+                    onNavigateToSearch = onSearchClick
+                )
             }
         }
     }
@@ -188,13 +199,24 @@ private fun TopBar(onSearchClick: () -> Unit) {
 }
 
 @Composable
-private fun MainNavHost(navController: NavHostController) {
+private fun MainNavHost(
+    navController: NavHostController,
+    onNavigateToSearch: () -> Unit
+) {
     NavHost(
         navController = navController,
         startDestination = MainRoute.Home
     ) {
-        composable(MainRoute.Home) { HomeScreen() }
-        composable(MainRoute.Subscription) { SubscriptionScreen() }
-        composable(MainRoute.Profile) { ProfileScreen() }
+        composable(MainRoute.Home) {
+            HomeScreen(
+                onNavigateToSearch = onNavigateToSearch
+            )
+        }
+        composable(MainRoute.Subscription) {
+            SubscriptionScreen()
+        }
+        composable(MainRoute.Profile) {
+            ProfileScreen()
+        }
     }
 }
