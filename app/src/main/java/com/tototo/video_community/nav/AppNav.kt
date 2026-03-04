@@ -9,8 +9,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.tototo.video_community.AppState
 import com.tototo.video_community.features.login.LoginNav
 import com.tototo.video_community.features.main.MainNav
@@ -31,11 +33,6 @@ fun AppNav(
                 popUpTo(AppRoute.LoginNav) { inclusive = true }
                 launchSingleTop = true
             }
-        } else {
-            appNavController.navigate(AppRoute.LoginNav) {
-                popUpTo(AppRoute.MainNav) { inclusive = true }
-                launchSingleTop = true
-            }
         }
     }
 
@@ -46,27 +43,32 @@ fun AppNav(
     ) {
         composable(AppRoute.Splash) {
             SplashScreen {
-                val nextRoute = if (localIsLogin) AppRoute.MainNav else AppRoute.LoginNav
+                val nextRoute = AppRoute.MainNav
                 appNavController.navigate(nextRoute) {
                     popUpTo(AppRoute.Splash) { inclusive = true }
                     launchSingleTop = true
                 }
             }
         }
-
         composable(AppRoute.LoginNav) { LoginNav() }
-
         composable(AppRoute.MainNav) {
             MainNav(
-                // 当 AppNav 创建 MainNav 时，它传入了一个 Lambda 表达式
-                // 这个 Lambda“捕获”了外部的 appNavController
-                // 当 MainNav 内部调用 appNavigateTo("search") 时，实际上是在执行 appNavController.navigate("search")
                 appNavigateTo = { route ->
                     appNavController.navigate(route)
                 }
             )
         }
-
-        composable(AppRoute.Search) { SearchScreen() }
+        composable(
+            route = "${AppRoute.Search}?q={q}",
+            arguments = listOf(
+                navArgument("q") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
+        ) { backStackEntry ->
+            val query = backStackEntry.arguments?.getString("q").orEmpty()
+            SearchScreen(initialQuery = query)
+        }
     }
 }

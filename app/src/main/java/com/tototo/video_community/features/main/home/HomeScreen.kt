@@ -1,6 +1,5 @@
 package com.tototo.video_community.features.main.home
 
-import android.R
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -28,7 +27,7 @@ private data class HomeItem(
 
 @Composable
 fun HomeScreen(
-    onNavigateToSearch: () -> Unit
+    onNavigateToSearch: (String) -> Unit
 ) {
     val data = listOf(
         HomeItem(
@@ -65,9 +64,7 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable {
-                        if (item.title.contains("示例")) {
-                            onNavigateToSearch()
-                        }
+                        onNavigateToSearch(item.title)
                     }
             )
         }
@@ -92,8 +89,8 @@ private fun ItemCard(
                     .fillMaxWidth()
                     .height(160.dp),
                 contentScale = ContentScale.Crop,
-                placeholder = painterResource(R.drawable.ic_menu_report_image),
-                error = painterResource(R.drawable.ic_menu_report_image)
+                placeholder = painterResource(android.R.drawable.ic_menu_report_image),
+                error = painterResource(android.R.drawable.ic_menu_report_image)
             )
             Column(
                 modifier = Modifier.fillMaxWidth(),

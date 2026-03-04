@@ -1,6 +1,7 @@
 package com.tototo.video_community.features.main
 
 import android.content.res.Configuration
+import android.net.Uri
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -70,7 +71,11 @@ fun MainNav(
                 items = items,
                 currentRoute = currentRoute,
                 onSearchClick = onSearchClick,
-                onNavigate = { route -> navController.navigate(route) }
+                onNavigate = { route -> navController.navigate(route) },
+                onNavigateToSearchWithQuery = { q ->
+                    val route = "${AppRoute.Search}?q=${Uri.encode(q)}"
+                    appNavigateTo(route)
+                }
             )
         }
         isPortrait -> {
@@ -79,7 +84,11 @@ fun MainNav(
                 items = items,
                 currentRoute = currentRoute,
                 onSearchClick = onSearchClick,
-                onNavigate = { route -> navController.navigate(route) }
+                onNavigate = { route -> navController.navigate(route) },
+                onNavigateToSearchWithQuery = { q ->
+                    val route = "${AppRoute.Search}?q=${Uri.encode(q)}"
+                    appNavigateTo(route)
+                }
             )
         }
         else -> {
@@ -88,7 +97,11 @@ fun MainNav(
                 items = items,
                 currentRoute = currentRoute,
                 onSearchClick = onSearchClick,
-                onNavigate = { route -> navController.navigate(route) }
+                onNavigate = { route -> navController.navigate(route) },
+                onNavigateToSearchWithQuery = { q ->
+                    val route = "${AppRoute.Search}?q=${Uri.encode(q)}"
+                    appNavigateTo(route)
+                }
             )
         }
     }
@@ -100,14 +113,15 @@ private fun PortraitContent(
     items: List<BottomNavItem>,
     currentRoute: String?,
     onSearchClick: () -> Unit,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onNavigateToSearchWithQuery: (String) -> Unit
 ) {
     Column(Modifier.fillMaxSize()) {
         TopBar(onSearchClick)
         Box(Modifier.weight(1f)) {
             MainNavHost(
                 navController = navController,
-                onNavigateToSearch = onSearchClick
+                onNavigateToSearchWithQuery = onNavigateToSearchWithQuery
             )
         }
         NavigationBar {
@@ -129,7 +143,8 @@ private fun LandscapeContent(
     items: List<BottomNavItem>,
     currentRoute: String?,
     onSearchClick: () -> Unit,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onNavigateToSearchWithQuery: (String) -> Unit
 ) {
     Column(Modifier.fillMaxSize()) {
         TopBar(onSearchClick)
@@ -138,7 +153,7 @@ private fun LandscapeContent(
             Box(Modifier.fillMaxSize()) {
                 MainNavHost(
                     navController = navController,
-                    onNavigateToSearch = onSearchClick
+                    onNavigateToSearchWithQuery = onNavigateToSearchWithQuery
                 )
             }
         }
@@ -151,7 +166,8 @@ private fun DesktopOrTabletContent(
     items: List<BottomNavItem>,
     currentRoute: String?,
     onSearchClick: () -> Unit,
-    onNavigate: (String) -> Unit
+    onNavigate: (String) -> Unit,
+    onNavigateToSearchWithQuery: (String) -> Unit
 ) {
     Column(Modifier.fillMaxSize()) {
         TopBar(onSearchClick)
@@ -160,7 +176,7 @@ private fun DesktopOrTabletContent(
             Box(Modifier.fillMaxSize()) {
                 MainNavHost(
                     navController = navController,
-                    onNavigateToSearch = onSearchClick
+                    onNavigateToSearchWithQuery = onNavigateToSearchWithQuery
                 )
             }
         }
@@ -201,7 +217,7 @@ private fun TopBar(onSearchClick: () -> Unit) {
 @Composable
 private fun MainNavHost(
     navController: NavHostController,
-    onNavigateToSearch: () -> Unit
+    onNavigateToSearchWithQuery: (String) -> Unit
 ) {
     NavHost(
         navController = navController,
@@ -209,7 +225,7 @@ private fun MainNavHost(
     ) {
         composable(MainRoute.Home) {
             HomeScreen(
-                onNavigateToSearch = onNavigateToSearch
+                onNavigateToSearch = onNavigateToSearchWithQuery
             )
         }
         composable(MainRoute.Subscription) {

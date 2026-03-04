@@ -1,10 +1,14 @@
 package com.tototo.video_community.di
 
-import com.tototo.video_community.ui.viewmodel.SharedViewModel
-import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
+import org.koin.androidx.viewmodel.dsl.viewModel
+import com.tototo.video_community.ui.viewmodel.SharedViewModel
 
 val appModule = module {
-    // 定义：SharedViewModel 是单例，用它的构造函数创建
-    singleOf(::SharedViewModel)
+    // 在这里按需提供全局单例，例如网络、DataStore 等
+    // 举例：single { SomeRepository(get()) }
+}
+
+val viewModelModule = module {
+    viewModel { SharedViewModel() }
 }

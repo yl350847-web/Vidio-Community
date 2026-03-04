@@ -12,6 +12,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -23,9 +24,18 @@ private data class ResultItem(
 )
 
 @Composable
-fun SearchScreen() {
-    val query = remember { mutableStateOf("") }
+fun SearchScreen(
+    initialQuery: String
+) {
+    val query = remember { mutableStateOf(initialQuery) }
     val results = remember { mutableStateOf(listOf<ResultItem>()) }
+
+    LaunchedEffect(initialQuery) {
+        val q = initialQuery.trim()
+        results.value = if (q.isEmpty()) emptyList() else List(10) { i ->
+            ResultItem(title = "$q 的结果 $i", desc = "这是演示数据 $i")
+        }
+    }
 
     Column(
         modifier = Modifier.fillMaxSize(),
