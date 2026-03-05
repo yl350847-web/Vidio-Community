@@ -13,27 +13,24 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
-private data class ResultItem(
-    val title: String,
-    val desc: String
-)
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SearchScreen(
-    initialQuery: String
+    initialQuery: String,
+    viewModel: SearchViewModel = koinViewModel()
 ) {
-    val query = remember { mutableStateOf(initialQuery) }
-    val results = remember { mutableStateOf(listOf<ResultItem>()) }
+    val ui = viewModel.uiState.collectAsState().value
+    val input = remember { mutableStateOf(initialQuery) }
 
     LaunchedEffect(initialQuery) {
-        val q = initialQuery.trim()
-        results.value = if (q.isEmpty()) emptyList() else List(10) { i ->
-            ResultItem(title = "$q 的结果 $i", desc = "这是演示数据 $i")
+        if (initialQuery.isNotBlank()) {
+            viewModel.load(initialQuery)
         }
     }
 
@@ -42,30 +39,26 @@ fun SearchScreen(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         OutlinedTextField(
-            value = query.value,
-            onValueChange = { query.value = it },
+            value = input.value,
+            onValueChange = { input.value = it },
             modifier = Modifier.fillMaxWidth(),
             label = { Text("搜索关键字") }
         )
         Button(
-            onClick = {
-                val q = query.value.trim()
-                results.value = when {
-                    q.isEmpty() -> emptyList()
-                    else -> List(10) { i ->
-                        ResultItem(title = "$q 的结果 $i", desc = "这是演示数据 $i")
-                    }
-                }
-            }
+            onClick = { viewModel.load(input.value) }
         ) {
             Text("搜索")
+        }
+
+        if (ui.items.isEmpty() && ui.query.isNotBlank()) {
+            Text("没有找到与“${ui.query}”相关的结果")
         }
 
         LazyColumn(
             contentPadding = PaddingValues(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(results.value) { item ->
+            items(ui.items) { item ->
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()

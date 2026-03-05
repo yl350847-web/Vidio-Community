@@ -12,60 +12,34 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-
-private data class HomeItem(
-    val title: String,
-    val subtitle: String,
-    val imageUrl: String
-)
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun HomeScreen(
-    onNavigateToSearch: (String) -> Unit
+    onNavigateToSearch: (String) -> Unit,
+    viewModel: HomeViewModel = koinViewModel()
 ) {
-    val data = listOf(
-        HomeItem(
-            title = "推荐视频",
-            subtitle = "为你定制",
-            imageUrl = "https://picsum.photos/seed/recommend/800/400"
-        ),
-        HomeItem(
-            title = "热门视频",
-            subtitle = "全站热度",
-            imageUrl = "https://picsum.photos/seed/hot/800/400"
-        ),
-        HomeItem(
-            title = "专题合集",
-            subtitle = "主题内容",
-            imageUrl = "https://picsum.photos/seed/topic/800/400"
-        ),
-        HomeItem(
-            title = "示例：跳转搜索",
-            subtitle = "演示跨路由",
-            imageUrl = "https://picsum.photos/seed/search/800/400"
-        )
-    )
+    val uiState = viewModel.uiState.collectAsState().value
 
     LazyColumn(
         contentPadding = PaddingValues(vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(data) { item ->
+        items(uiState.items) { item ->
             ItemCard(
                 title = item.title,
                 subtitle = item.subtitle,
                 imageUrl = item.imageUrl,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable {
-                        onNavigateToSearch(item.title)
-                    }
+                    .clickable { onNavigateToSearch(item.title) }
             )
         }
     }
@@ -79,9 +53,7 @@ private fun ItemCard(
     modifier: Modifier = Modifier
 ) {
     Surface(modifier = modifier) {
-        Column(
-            horizontalAlignment = Alignment.Start
-        ) {
+        Column(horizontalAlignment = Alignment.Start) {
             AsyncImage(
                 model = imageUrl,
                 contentDescription = null,

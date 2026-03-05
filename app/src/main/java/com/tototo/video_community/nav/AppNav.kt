@@ -53,9 +53,7 @@ fun AppNav(
         composable(AppRoute.LoginNav) { LoginNav() }
         composable(AppRoute.MainNav) {
             MainNav(
-                appNavigateTo = { route ->
-                    appNavController.navigate(route)
-                }
+                appNavigateTo = { route -> appNavController.navigate(route) }
             )
         }
         composable(

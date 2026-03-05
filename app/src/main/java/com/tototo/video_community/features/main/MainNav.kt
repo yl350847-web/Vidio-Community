@@ -63,6 +63,10 @@ fun MainNav(
     val isTablet = width in 600..839
 
     val onSearchClick = { appNavigateTo(AppRoute.Search) }
+    val onNavigateToSearchWithQuery: (String) -> Unit = { q ->
+        val route = "${AppRoute.Search}?q=${Uri.encode(q)}"
+        appNavigateTo(route)
+    }
 
     when {
         isDesktop || (!isPortrait && isTablet) -> {
@@ -72,10 +76,7 @@ fun MainNav(
                 currentRoute = currentRoute,
                 onSearchClick = onSearchClick,
                 onNavigate = { route -> navController.navigate(route) },
-                onNavigateToSearchWithQuery = { q ->
-                    val route = "${AppRoute.Search}?q=${Uri.encode(q)}"
-                    appNavigateTo(route)
-                }
+                onNavigateToSearchWithQuery = onNavigateToSearchWithQuery
             )
         }
         isPortrait -> {
@@ -85,10 +86,7 @@ fun MainNav(
                 currentRoute = currentRoute,
                 onSearchClick = onSearchClick,
                 onNavigate = { route -> navController.navigate(route) },
-                onNavigateToSearchWithQuery = { q ->
-                    val route = "${AppRoute.Search}?q=${Uri.encode(q)}"
-                    appNavigateTo(route)
-                }
+                onNavigateToSearchWithQuery = onNavigateToSearchWithQuery
             )
         }
         else -> {
@@ -98,10 +96,7 @@ fun MainNav(
                 currentRoute = currentRoute,
                 onSearchClick = onSearchClick,
                 onNavigate = { route -> navController.navigate(route) },
-                onNavigateToSearchWithQuery = { q ->
-                    val route = "${AppRoute.Search}?q=${Uri.encode(q)}"
-                    appNavigateTo(route)
-                }
+                onNavigateToSearchWithQuery = onNavigateToSearchWithQuery
             )
         }
     }
