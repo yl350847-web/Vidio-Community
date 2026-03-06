@@ -17,6 +17,7 @@ class SearchViewModel(
     private val historyRepo: SearchHistoryRepository
 ) : ViewModel() {
     private val queryFlow = MutableStateFlow("")
+
     val results: Flow<PagingData<SearchItem>> =
         queryFlow.flatMapLatest { q ->
             repo.pagerFor(q).flow
@@ -24,7 +25,11 @@ class SearchViewModel(
 
     val recentQueries: Flow<List<String>> = historyRepo.recentQueries
 
-    fun load(query: String) {
+    fun setQuery(query: String) {
+        queryFlow.value = query
+    }
+
+    fun loadManual(query: String) {
         queryFlow.value = query
         viewModelScope.launch {
             historyRepo.addQuery(query)

@@ -20,10 +20,13 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
@@ -37,8 +40,19 @@ fun SearchScreen(
 
     LaunchedEffect(initialQuery) {
         if (initialQuery.isNotBlank()) {
-            viewModel.load(initialQuery)
+            viewModel.loadManual(initialQuery)
         }
+    }
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { input.value }
+            .debounce(400)
+            .distinctUntilChanged()
+            .collect { q ->
+                if (q.isNotBlank()) {
+                    viewModel.setQuery(q)
+                }
+            }
     }
 
     Column(
@@ -60,7 +74,7 @@ fun SearchScreen(
             recents.forEach { q ->
                 OutlinedButton(onClick = {
                     input.value = q
-                    viewModel.load(q)
+                    viewModel.loadManual(q)
                 }) {
                     Text(q)
                 }
@@ -71,7 +85,7 @@ fun SearchScreen(
                 }
             }
         }
-        Button(onClick = { viewModel.load(input.value) }) {
+        Button(onClick = { viewModel.loadManual(input.value) }) {
             Text("搜索")
         }
 
