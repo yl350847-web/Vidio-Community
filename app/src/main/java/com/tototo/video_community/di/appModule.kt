@@ -7,14 +7,18 @@ import com.tototo.video_community.data.repository.FakeHomeRepository
 import com.tototo.video_community.features.main.home.HomeViewModel
 import com.tototo.video_community.data.repository.FakeSearchRepository
 import com.tototo.video_community.features.search.SearchViewModel
+import com.tototo.video_community.data.repository.FakeSubscriptionRepository
+import com.tototo.video_community.features.main.subscription.SubscriptionViewModel
 
 val appModule = module {
     single { FakeHomeRepository() }
     single { FakeSearchRepository() }
+    single { FakeSubscriptionRepository() }
 }
 
 val viewModelModule = module {
     viewModel { SharedViewModel() }
     viewModel { HomeViewModel(get()) }
     viewModel { SearchViewModel(get()) }
+    viewModel { SubscriptionViewModel(get()) }
 }

@@ -5,38 +5,35 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
-
-private data class SubItem(
-    val title: String,
-    val imageUrl: String
-)
+import org.koin.androidx.compose.koinViewModel
 
 @Composable
-fun SubscriptionScreen() {
-    val data = List(12) { index ->
-        SubItem(
-            title = "订阅项 $index",
-            imageUrl = "https://picsum.photos/seed/sub$index/800/400"
-        )
-    }
-
+fun SubscriptionScreen(
+    viewModel: SubscriptionViewModel = koinViewModel()
+) {
+    val lazyItems = viewModel.items.collectAsLazyPagingItems()
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         contentPadding = PaddingValues(12.dp)
     ) {
-        items(data) { item ->
-            GridItemCard(
-                title = item.title,
-                imageUrl = item.imageUrl
-            )
+        items(lazyItems.itemCount) { index ->
+            val item = lazyItems[index]
+            if (item != null) {
+                GridItemCard(
+                    title = item.title,
+                    imageUrl = item.imageUrl
+                )
+            }
         }
     }
 }
@@ -52,7 +49,10 @@ private fun GridItemCard(
             contentDescription = null,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(120.dp)
+                .height(120.dp),
+            contentScale = ContentScale.Crop,
+            placeholder = painterResource(android.R.drawable.ic_menu_report_image),
+            error = painterResource(android.R.drawable.ic_menu_report_image)
         )
         Text(title, style = MaterialTheme.typography.titleMedium)
     }
