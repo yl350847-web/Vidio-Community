@@ -1,16 +1,23 @@
 package com.tototo.video_community.data.repository
 
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+
 data class SearchItem(
     val title: String,
     val desc: String
 )
 
 class FakeSearchRepository {
-    fun search(query: String): List<SearchItem> {
-        val q = query.trim()
-        if (q.isEmpty()) return emptyList()
-        return List(10) { i ->
-            SearchItem(title = "$q 的结果 $i", desc = "这是演示数据 $i")
+    fun pagerFor(query: String): Pager<Int, SearchItem> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 20,
+                initialLoadSize = 20,
+                prefetchDistance = 10
+            )
+        ) {
+            FakeSearchPagingSource(query)
         }
     }
 }

@@ -66,6 +66,8 @@ dependencies {
 
     // --- OkHttp (Coil 网络底层) ---
     // 已由 coil-network-okhttp 传递依赖，无需显式添加
+    implementation(libs.androidx.paging.runtime)
+    implementation(libs.androidx.paging.compose)
 
     // --- Testing ---
     testImplementation(libs.junit)

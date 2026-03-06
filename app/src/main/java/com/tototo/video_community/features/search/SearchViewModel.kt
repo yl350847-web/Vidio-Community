@@ -1,26 +1,26 @@
 package com.tototo.video_community.features.search
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.flatMapLatest
 import com.tototo.video_community.data.repository.FakeSearchRepository
 import com.tototo.video_community.data.repository.SearchItem
-
-data class SearchUiState(
-    val query: String = "",
-    val isLoading: Boolean = false,
-    val items: List<SearchItem> = emptyList()
-)
 
 class SearchViewModel(
     private val repo: FakeSearchRepository
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(SearchUiState())
-    val uiState: StateFlow<SearchUiState> = _uiState
+    private val queryFlow = MutableStateFlow("")
+
+    val results: Flow<PagingData<SearchItem>> =
+        queryFlow.flatMapLatest { q ->
+            repo.pagerFor(q).flow
+        }.cachedIn(viewModelScope)
 
     fun load(query: String) {
-        _uiState.value = _uiState.value.copy(query = query, isLoading = true)
-        val result = repo.search(query)
-        _uiState.value = _uiState.value.copy(isLoading = false, items = result)
+        queryFlow.value = query
     }
 }
