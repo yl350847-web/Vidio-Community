@@ -11,6 +11,7 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Subscriptions
+import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -22,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
@@ -35,6 +37,8 @@ import com.tototo.video_community.features.main.navigation.MainRoute
 import com.tototo.video_community.features.main.profile.ProfileScreen
 import com.tototo.video_community.features.main.subscription.SubscriptionScreen
 import com.tototo.video_community.nav.AppRoute
+import com.tototo.video_community.ui.viewmodel.ThemeViewModel
+import org.koin.androidx.compose.koinViewModel
 
 private data class BottomNavItem(
     val route: String,
@@ -199,11 +203,17 @@ private fun SideNavigateRail(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopBar(onSearchClick: () -> Unit) {
+    val themeViewModel = koinViewModel<ThemeViewModel>()
+    val isDark = themeViewModel.isDark.collectAsState().value
+
     TopAppBar(
         title = { Text("BiliTube") },
         actions = {
             IconButton(onClick = onSearchClick) {
                 Icon(Icons.Rounded.Search, contentDescription = null)
+            }
+            IconButton(onClick = { themeViewModel.toggle() }) {
+                Icon(Icons.Rounded.DarkMode, contentDescription = null)
             }
         }
     )
@@ -216,18 +226,18 @@ private fun MainNavHost(
 ) {
     NavHost(
         navController = navController,
-        startDestination = MainRoute.Home
+        startDestination = com.tototo.video_community.features.main.navigation.MainRoute.Home
     ) {
-        composable(MainRoute.Home) {
-            HomeScreen(
+        composable(com.tototo.video_community.features.main.navigation.MainRoute.Home) {
+            com.tototo.video_community.features.main.home.HomeScreen(
                 onNavigateToSearch = onNavigateToSearchWithQuery
             )
         }
-        composable(MainRoute.Subscription) {
-            SubscriptionScreen()
+        composable(com.tototo.video_community.features.main.navigation.MainRoute.Subscription) {
+            com.tototo.video_community.features.main.subscription.SubscriptionScreen()
         }
-        composable(MainRoute.Profile) {
-            ProfileScreen()
+        composable(com.tototo.video_community.features.main.navigation.MainRoute.Profile) {
+            com.tototo.video_community.features.main.profile.ProfileScreen()
         }
     }
 }

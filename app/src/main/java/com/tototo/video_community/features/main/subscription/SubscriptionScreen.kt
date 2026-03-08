@@ -1,6 +1,9 @@
 package com.tototo.video_community.features.main.subscription
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -9,6 +12,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,45 +30,61 @@ fun SubscriptionScreen(
     viewModel: SubscriptionViewModel = koinViewModel()
 ) {
     val lazyItems = viewModel.items.collectAsLazyPagingItems()
-    when (val s = lazyItems.loadState.refresh) {
-        is LoadState.Loading -> {
-            CircularProgressIndicator()
-        }
-        is LoadState.Error -> {
-            ColumnWithRetry(
-                message = "加载失败：${s.error.message ?: "未知错误"}",
-                onRetry = { lazyItems.retry() }
-            )
-        }
-        is LoadState.NotLoading -> {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
-                contentPadding = PaddingValues(12.dp)
-            ) {
-                items(lazyItems.itemCount) { index ->
-                    val item = lazyItems[index]
-                    if (item != null) {
-                        GridItemCard(
-                            title = item.title,
-                            imageUrl = item.imageUrl
-                        )
-                    }
-                }
-                when (val a = lazyItems.loadState.append) {
-                    is LoadState.Loading -> {
-                        item(span = { GridItemSpan(2) }) {
-                            CircularProgressIndicator()
+
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        RowTopActions(
+            onRefresh = { lazyItems.refresh() }
+        )
+
+        when (val s = lazyItems.loadState.refresh) {
+            is LoadState.Loading -> {
+                CircularProgressIndicator()
+            }
+            is LoadState.Error -> {
+                ColumnError(
+                    message = "加载失败：" + (s.error.message ?: "未知错误"),
+                    onRetry = { lazyItems.retry() }
+                )
+            }
+            is LoadState.NotLoading -> {
+                if (lazyItems.itemCount == 0) {
+                    ColumnEmpty(
+                        onRetry = { lazyItems.refresh() }
+                    )
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(2),
+                        contentPadding = PaddingValues(12.dp)
+                    ) {
+                        items(lazyItems.itemCount) { index ->
+                            val item = lazyItems[index]
+                            if (item != null) {
+                                GridItemCard(
+                                    title = item.title,
+                                    imageUrl = item.imageUrl
+                                )
+                            }
+                        }
+                        when (val a = lazyItems.loadState.append) {
+                            is LoadState.Loading -> {
+                                item(span = { GridItemSpan(2) }) {
+                                    CircularProgressIndicator()
+                                }
+                            }
+                            is LoadState.Error -> {
+                                item(span = { GridItemSpan(2) }) {
+                                    ColumnError(
+                                        message = "更多内容加载失败：" + (a.error.message ?: "未知错误"),
+                                        onRetry = { lazyItems.retry() }
+                                    )
+                                }
+                            }
+                            else -> {}
                         }
                     }
-                    is LoadState.Error -> {
-                        item(span = { GridItemSpan(2) }) {
-                            ColumnWithRetry(
-                                message = "更多内容加载失败：${a.error.message ?: "未知错误"}",
-                                onRetry = { lazyItems.retry() }
-                            )
-                        }
-                    }
-                    else -> {}
                 }
             }
         }
@@ -72,15 +92,43 @@ fun SubscriptionScreen(
 }
 
 @Composable
-private fun ColumnWithRetry(
+private fun RowTopActions(
+    onRefresh: () -> Unit
+) {
+    androidx.compose.foundation.layout.Row(
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Button(onClick = onRefresh) {
+            Text("刷新")
+        }
+    }
+}
+
+@Composable
+private fun ColumnError(
     message: String,
     onRetry: () -> Unit
 ) {
     androidx.compose.foundation.layout.Column(
-        verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Text(message)
-        Button(onClick = onRetry) {
+        OutlinedButton(onClick = onRetry) {
+            Text("重试")
+        }
+    }
+}
+
+@Composable
+private fun ColumnEmpty(
+    onRetry: () -> Unit
+) {
+    androidx.compose.foundation.layout.Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text("暂无内容")
+        OutlinedButton(onClick = onRetry) {
             Text("重试")
         }
     }

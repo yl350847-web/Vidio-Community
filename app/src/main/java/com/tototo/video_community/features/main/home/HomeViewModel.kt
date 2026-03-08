@@ -7,7 +7,8 @@ import com.tototo.video_community.data.repository.FakeHomeRepository
 import com.tototo.video_community.data.repository.HomeItem
 
 data class HomeUiState(
-    val items: List<HomeItem> = emptyList()
+    val items: List<HomeItem> = emptyList(),
+    val isRefreshing: Boolean = false
 )
 
 class HomeViewModel(
@@ -21,6 +22,12 @@ class HomeViewModel(
     }
 
     fun load() {
-        _uiState.value = HomeUiState(items = repo.getHomeItems())
+        _uiState.value = HomeUiState(items = repo.getHomeItems(), isRefreshing = false)
+    }
+
+    fun reload() {
+        _uiState.value = _uiState.value.copy(isRefreshing = true)
+        val newItems = repo.getHomeItems()
+        _uiState.value = HomeUiState(items = newItems, isRefreshing = false)
     }
 }

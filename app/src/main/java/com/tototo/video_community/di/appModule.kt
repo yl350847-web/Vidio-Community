@@ -11,12 +11,15 @@ import com.tototo.video_community.features.search.SearchViewModel
 import com.tototo.video_community.data.repository.FakeSubscriptionRepository
 import com.tototo.video_community.features.main.subscription.SubscriptionViewModel
 import com.tototo.video_community.data.local.SearchHistoryRepository
+import com.tototo.video_community.data.local.ThemePreferenceRepository
+import com.tototo.video_community.ui.viewmodel.ThemeViewModel
 
 val appModule = module {
     single { FakeHomeRepository() }
     single { FakeSearchRepository() }
     single { FakeSubscriptionRepository() }
     single { SearchHistoryRepository(androidContext()) }
+    single { ThemePreferenceRepository(androidContext()) }
 }
 
 val viewModelModule = module {
@@ -24,4 +27,5 @@ val viewModelModule = module {
     viewModel { HomeViewModel(get()) }
     viewModel { SearchViewModel(get(), get()) }
     viewModel { SubscriptionViewModel(get()) }
+    viewModel { ThemeViewModel(get()) }
 }
