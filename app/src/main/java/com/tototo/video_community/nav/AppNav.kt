@@ -17,6 +17,7 @@ import com.tototo.video_community.AppState
 import com.tototo.video_community.features.login.LoginNav
 import com.tototo.video_community.features.main.MainNav
 import com.tototo.video_community.features.search.SearchScreen
+import com.tototo.video_community.features.setting.SettingScreen
 import com.tototo.video_community.features.splash.SplashScreen
 
 @Composable
@@ -67,6 +68,10 @@ fun AppNav(
         ) { backStackEntry ->
             val query = backStackEntry.arguments?.getString("q").orEmpty()
             SearchScreen(initialQuery = query)
+        }
+        // 新增 Setting 路由
+        composable(AppRoute.Setting) {
+            SettingScreen(onBack = { appNavController.popBackStack() })
         }
     }
 }

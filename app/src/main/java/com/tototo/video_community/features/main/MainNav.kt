@@ -11,7 +11,6 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.Person
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material.icons.rounded.Subscriptions
-import androidx.compose.material.icons.rounded.DarkMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -23,7 +22,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
@@ -37,8 +35,6 @@ import com.tototo.video_community.features.main.navigation.MainRoute
 import com.tototo.video_community.features.main.profile.ProfileScreen
 import com.tototo.video_community.features.main.subscription.SubscriptionScreen
 import com.tototo.video_community.nav.AppRoute
-import com.tototo.video_community.ui.viewmodel.ThemeViewModel
-import org.koin.androidx.compose.koinViewModel
 
 private data class BottomNavItem(
     val route: String,
@@ -66,12 +62,15 @@ fun MainNav(
     val isDesktop = width >= 840
     val isTablet = width in 600..839
 
+    // 定义跳转逻辑
     val onSearchClick = { appNavigateTo(AppRoute.Search) }
     val onNavigateToSearchWithQuery: (String) -> Unit = { q ->
         val route = "${AppRoute.Search}?q=${Uri.encode(q)}"
         appNavigateTo(route)
     }
+    val onNavigateToSetting = { appNavigateTo(AppRoute.Setting) }
 
+    // 根据设备类型选择布局容器
     when {
         isDesktop || (!isPortrait && isTablet) -> {
             DesktopOrTabletContent(
@@ -80,7 +79,8 @@ fun MainNav(
                 currentRoute = currentRoute,
                 onSearchClick = onSearchClick,
                 onNavigate = { route -> navController.navigate(route) },
-                onNavigateToSearchWithQuery = onNavigateToSearchWithQuery
+                onNavigateToSearchWithQuery = onNavigateToSearchWithQuery,
+                onNavigateToSetting = onNavigateToSetting
             )
         }
         isPortrait -> {
@@ -90,7 +90,8 @@ fun MainNav(
                 currentRoute = currentRoute,
                 onSearchClick = onSearchClick,
                 onNavigate = { route -> navController.navigate(route) },
-                onNavigateToSearchWithQuery = onNavigateToSearchWithQuery
+                onNavigateToSearchWithQuery = onNavigateToSearchWithQuery,
+                onNavigateToSetting = onNavigateToSetting
             )
         }
         else -> {
@@ -100,7 +101,8 @@ fun MainNav(
                 currentRoute = currentRoute,
                 onSearchClick = onSearchClick,
                 onNavigate = { route -> navController.navigate(route) },
-                onNavigateToSearchWithQuery = onNavigateToSearchWithQuery
+                onNavigateToSearchWithQuery = onNavigateToSearchWithQuery,
+                onNavigateToSetting = onNavigateToSetting
             )
         }
     }
@@ -113,14 +115,16 @@ private fun PortraitContent(
     currentRoute: String?,
     onSearchClick: () -> Unit,
     onNavigate: (String) -> Unit,
-    onNavigateToSearchWithQuery: (String) -> Unit
+    onNavigateToSearchWithQuery: (String) -> Unit,
+    onNavigateToSetting: () -> Unit
 ) {
     Column(Modifier.fillMaxSize()) {
         TopBar(onSearchClick)
         Box(Modifier.weight(1f)) {
             MainNavHost(
                 navController = navController,
-                onNavigateToSearchWithQuery = onNavigateToSearchWithQuery
+                onNavigateToSearchWithQuery = onNavigateToSearchWithQuery,
+                onNavigateToSetting = onNavigateToSetting
             )
         }
         NavigationBar {
@@ -143,7 +147,8 @@ private fun LandscapeContent(
     currentRoute: String?,
     onSearchClick: () -> Unit,
     onNavigate: (String) -> Unit,
-    onNavigateToSearchWithQuery: (String) -> Unit
+    onNavigateToSearchWithQuery: (String) -> Unit,
+    onNavigateToSetting: () -> Unit
 ) {
     Column(Modifier.fillMaxSize()) {
         TopBar(onSearchClick)
@@ -152,7 +157,8 @@ private fun LandscapeContent(
             Box(Modifier.fillMaxSize()) {
                 MainNavHost(
                     navController = navController,
-                    onNavigateToSearchWithQuery = onNavigateToSearchWithQuery
+                    onNavigateToSearchWithQuery = onNavigateToSearchWithQuery,
+                    onNavigateToSetting = onNavigateToSetting
                 )
             }
         }
@@ -166,7 +172,8 @@ private fun DesktopOrTabletContent(
     currentRoute: String?,
     onSearchClick: () -> Unit,
     onNavigate: (String) -> Unit,
-    onNavigateToSearchWithQuery: (String) -> Unit
+    onNavigateToSearchWithQuery: (String) -> Unit,
+    onNavigateToSetting: () -> Unit
 ) {
     Column(Modifier.fillMaxSize()) {
         TopBar(onSearchClick)
@@ -175,7 +182,8 @@ private fun DesktopOrTabletContent(
             Box(Modifier.fillMaxSize()) {
                 MainNavHost(
                     navController = navController,
-                    onNavigateToSearchWithQuery = onNavigateToSearchWithQuery
+                    onNavigateToSearchWithQuery = onNavigateToSearchWithQuery,
+                    onNavigateToSetting = onNavigateToSetting
                 )
             }
         }
@@ -203,17 +211,12 @@ private fun SideNavigateRail(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopBar(onSearchClick: () -> Unit) {
-    val themeViewModel = koinViewModel<ThemeViewModel>()
-    val isDark = themeViewModel.isDark.collectAsState().value
-
+    // 主题切换已移至 Setting 页面，TopBar 只保留搜索
     TopAppBar(
         title = { Text("BiliTube") },
         actions = {
             IconButton(onClick = onSearchClick) {
-                Icon(Icons.Rounded.Search, contentDescription = null)
-            }
-            IconButton(onClick = { themeViewModel.toggle() }) {
-                Icon(Icons.Rounded.DarkMode, contentDescription = null)
+                Icon(Icons.Rounded.Search, contentDescription = "搜索")
             }
         }
     )
@@ -222,22 +225,23 @@ private fun TopBar(onSearchClick: () -> Unit) {
 @Composable
 private fun MainNavHost(
     navController: NavHostController,
-    onNavigateToSearchWithQuery: (String) -> Unit
+    onNavigateToSearchWithQuery: (String) -> Unit,
+    onNavigateToSetting: () -> Unit
 ) {
     NavHost(
         navController = navController,
-        startDestination = com.tototo.video_community.features.main.navigation.MainRoute.Home
+        startDestination = MainRoute.Home
     ) {
-        composable(com.tototo.video_community.features.main.navigation.MainRoute.Home) {
-            com.tototo.video_community.features.main.home.HomeScreen(
+        composable(MainRoute.Home) {
+            HomeScreen(
                 onNavigateToSearch = onNavigateToSearchWithQuery
             )
         }
-        composable(com.tototo.video_community.features.main.navigation.MainRoute.Subscription) {
-            com.tototo.video_community.features.main.subscription.SubscriptionScreen()
+        composable(MainRoute.Subscription) {
+            SubscriptionScreen()
         }
-        composable(com.tototo.video_community.features.main.navigation.MainRoute.Profile) {
-            com.tototo.video_community.features.main.profile.ProfileScreen()
+        composable(MainRoute.Profile) {
+            ProfileScreen(onNavigateToSetting = onNavigateToSetting)
         }
     }
 }

@@ -5,4 +5,5 @@ object AppRoute {
     const val LoginNav = "login"
     const val MainNav = "main"
     const val Search = "search"
+    const val Setting = "setting" // 新增
 }
