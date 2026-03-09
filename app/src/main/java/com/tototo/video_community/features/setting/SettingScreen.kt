@@ -1,5 +1,6 @@
 package com.tototo.video_community.features.setting
 
+import android.os.Build
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,6 +32,8 @@ fun SettingScreen(
     themeViewModel: ThemeViewModel = koinViewModel()
 ) {
     val isDark = themeViewModel.isDark.collectAsState().value
+    val isDynamicColor = themeViewModel.isDynamicColor.collectAsState().value
+    val dynamicSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
     Scaffold(
         topBar = {
@@ -51,7 +54,6 @@ fun SettingScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 主题设置项
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -67,7 +69,32 @@ fun SettingScreen(
                 }
                 Switch(
                     checked = isDark,
-                    onCheckedChange = { themeViewModel.toggle() }
+                    onCheckedChange = { themeViewModel.toggleDark() }
+                )
+            }
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text("动态取色", style = MaterialTheme.typography.titleMedium)
+                    Text(
+                        if (dynamicSupported) "Android 12+ 可用，跟随系统壁纸取色"
+                        else "仅 Android 12+ 可用",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+                Switch(
+                    checked = if (dynamicSupported) isDynamicColor else false,
+                    onCheckedChange = {
+                        if (dynamicSupported) {
+                            themeViewModel.setDynamicColor(it)
+                        }
+                    },
+                    enabled = dynamicSupported
                 )
             }
         }

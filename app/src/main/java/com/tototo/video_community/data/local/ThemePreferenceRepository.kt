@@ -15,16 +15,29 @@ class ThemePreferenceRepository(context: Context) {
     private val dataStore = PreferenceDataStoreFactory.create {
         context.dataStoreFile("app_settings.preferences_pb")
     }
+
     private val KEY_DARK_MODE = booleanPreferencesKey("dark_mode")
+    private val KEY_DYNAMIC_COLOR = booleanPreferencesKey("dynamic_color")
 
     val isDarkMode: Flow<Boolean> =
         dataStore.data
             .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
             .map { prefs -> prefs[KEY_DARK_MODE] ?: false }
 
+    val isDynamicColor: Flow<Boolean> =
+        dataStore.data
+            .catch { if (it is IOException) emit(emptyPreferences()) else throw it }
+            .map { prefs -> prefs[KEY_DYNAMIC_COLOR] ?: false }
+
     suspend fun setDarkMode(value: Boolean) {
         dataStore.edit { prefs ->
             prefs[KEY_DARK_MODE] = value
+        }
+    }
+
+    suspend fun setDynamicColor(value: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[KEY_DYNAMIC_COLOR] = value
         }
     }
 }
