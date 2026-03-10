@@ -1,11 +1,13 @@
 package com.tototo.video_community.features.setting
 
 import android.os.Build
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
@@ -13,6 +15,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -23,7 +26,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.tototo.video_community.ui.viewmodel.ThemeViewModel
+import com.tototo.video_community.data.local.SearchHistoryRepository
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -34,6 +41,11 @@ fun SettingScreen(
     val isDark = themeViewModel.isDark.collectAsState().value
     val isDynamicColor = themeViewModel.isDynamicColor.collectAsState().value
     val dynamicSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+
+    // 搜索历史
+    val historyRepo = koinInject<SearchHistoryRepository>()
+    val recents = historyRepo.recentQueries.collectAsState(initial = emptyList()).value
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
@@ -54,6 +66,7 @@ fun SettingScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // 深色模式
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -73,6 +86,7 @@ fun SettingScreen(
                 )
             }
 
+            // 动态取色
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -81,7 +95,7 @@ fun SettingScreen(
                 Column {
                     Text("动态取色", style = MaterialTheme.typography.titleMedium)
                     Text(
-                        if (dynamicSupported) "Android 12+ 可用，跟随系统壁纸取色"
+                        if (dynamicSupported) "Android 12+ 可用，跟随壁纸取色"
                         else "仅 Android 12+ 可用",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -91,11 +105,40 @@ fun SettingScreen(
                     checked = if (dynamicSupported) isDynamicColor else false,
                     onCheckedChange = {
                         if (dynamicSupported) {
-                            themeViewModel.setDynamicColor(it)
+                            themeViewModel.toggleDynamicColor()
                         }
                     },
                     enabled = dynamicSupported
                 )
+            }
+
+            // 最近搜索历史
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("最近搜索", style = MaterialTheme.typography.titleMedium)
+                if (recents.isEmpty()) {
+                    Text(
+                        "暂无历史",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                } else {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        recents.forEach { q ->
+                            OutlinedButton(onClick = { /* 留空：此页仅展示与管理 */ }) {
+                                Text(q)
+                            }
+                        }
+                        OutlinedButton(onClick = { scope.launch { historyRepo.clear() } }) {
+                            Text("清空历史")
+                        }
+                    }
+                }
             }
         }
     }

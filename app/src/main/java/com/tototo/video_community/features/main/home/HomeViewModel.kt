@@ -1,33 +1,48 @@
 package com.tototo.video_community.features.main.home
 
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.State
 import androidx.lifecycle.ViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import androidx.lifecycle.viewModelScope
 import com.tototo.video_community.data.repository.FakeHomeRepository
 import com.tototo.video_community.data.repository.HomeItem
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 data class HomeUiState(
     val items: List<HomeItem> = emptyList(),
-    val isRefreshing: Boolean = false
+    val isRefreshing: Boolean = false,
+    val errorMessage: String? = null
 )
 
 class HomeViewModel(
     private val repo: FakeHomeRepository
 ) : ViewModel() {
-    private val _uiState = MutableStateFlow(HomeUiState())
-    val uiState: StateFlow<HomeUiState> = _uiState
+    private var initialLoaded = false
+    private var _uiState = mutableStateOf(HomeUiState())
+    val uiState: State<HomeUiState> get() = _uiState
 
     init {
-        load()
-    }
-
-    fun load() {
-        _uiState.value = HomeUiState(items = repo.getHomeItems(), isRefreshing = false)
+        // 首次加载
+        reload()
     }
 
     fun reload() {
-        _uiState.value = _uiState.value.copy(isRefreshing = true)
-        val newItems = repo.getHomeItems()
-        _uiState.value = HomeUiState(items = newItems, isRefreshing = false)
+        // 进入刷新状态，清空错误
+        _uiState.value = _uiState.value.copy(isRefreshing = true, errorMessage = null)
+        viewModelScope.launch {
+            // 模拟网络耗时
+            delay(1000)
+
+            // 你可以把这里换成真实仓库调用
+            val succeed = kotlin.random.Random.nextDouble() > 0.2 // 80% 成功
+            if (succeed) {
+                val newItems = repo.getHomeItems()
+                _uiState.value = HomeUiState(items = newItems, isRefreshing = false, errorMessage = null)
+                initialLoaded = true
+            } else {
+                _uiState.value = _uiState.value.copy(isRefreshing = false, errorMessage = "网络错误，请重试")
+            }
+        }
     }
 }

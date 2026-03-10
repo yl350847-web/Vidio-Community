@@ -68,9 +68,10 @@ dependencies {
     // 已由 coil-network-okhttp 传递依赖，无需显式添加
     implementation(libs.androidx.paging.runtime)
     implementation(libs.androidx.paging.compose)
-    implementation("androidx.appcompat:appcompat:1.7.0")
+    implementation(libs.androidx.appcompat)
 
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.compose.animation.core)
 
     // --- Testing ---
     testImplementation(libs.junit)

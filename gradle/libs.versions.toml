@@ -17,6 +17,7 @@ kotlinxSerialization = "1.7.3"
 coil = "3.3.0"
 paging = "3.3.2"
 datastore = "1.1.1"
+animationCore = "1.10.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -50,6 +51,7 @@ androidx-paging-runtime = { module = "androidx.paging:paging-runtime", version.r
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "paging" }
 
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastore" }
+androidx-compose-animation-core = { group = "androidx.compose.animation", name = "animation-core", version.ref = "animationCore" }
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
