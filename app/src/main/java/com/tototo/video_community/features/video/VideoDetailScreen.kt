@@ -24,6 +24,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -38,7 +39,9 @@ import com.tototo.video_community.features.setting.SettingsViewModel
 import com.tototo.video_community.ui.util.SystemUiUtil
 import org.koin.androidx.compose.koinViewModel
 import androidx.activity.compose.BackHandler
+import androidx.compose.material3.Slider
 import androidx.compose.runtime.collectAsState
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,6 +52,7 @@ fun VideoDetailScreen(
     settingsViewModel: SettingsViewModel = koinViewModel()
 ) {
     val context = LocalContext.current
+    val activity = context as Activity
     val controller = remember { VideoPlayerController(context) }
 
     val wlanQuality = settingsViewModel.wlanQuality.collectAsState().value
@@ -60,10 +64,21 @@ fun VideoDetailScreen(
     var selectedQuality by remember { mutableStateOf(VideoQuality.P720) }
     var isFullscreen by remember { mutableStateOf(false) }
 
+    // 播放进度（基础版）
+    var durationMs by remember { mutableLongStateOf(0L) }
+    var positionMs by remember { mutableLongStateOf(0L) }
+
+    // 兜底释放与恢复竖屏
     DisposableEffect(Unit) {
-        onDispose { controller.release() }
+        onDispose {
+            if (isFullscreen) {
+                SystemUiUtil.exitFullScreen(activity)
+            }
+            controller.release()
+        }
     }
 
+    // 默认画质进入时播放
     LaunchedEffect(wlanQuality) {
         val q = if (wlanQuality == VideoQuality.AUTO) VideoQuality.P720 else wlanQuality
         selectedQuality = q
@@ -71,10 +86,19 @@ fun VideoDetailScreen(
         controller.play(url)
     }
 
+    // 全屏时优先处理返回键：退出全屏再返回
     BackHandler(enabled = isFullscreen) {
-        val activity = context as Activity
         SystemUiUtil.exitFullScreen(activity)
         isFullscreen = false
+    }
+
+    // 定时刷新进度（基础版）
+    LaunchedEffect(controller.player) {
+        while (true) {
+            durationMs = controller.player.duration.coerceAtLeast(0L)
+            positionMs = controller.player.currentPosition.coerceAtLeast(0L)
+            delay(500)
+        }
     }
 
     Scaffold(
@@ -120,16 +144,35 @@ fun VideoDetailScreen(
 
             if (!isFullscreen) {
                 Text(
-                    "默认画质偏好：WLAN=${wlanQuality.label}，蜂窝=${mobileQuality.label}",
+                    "默认画质：WLAN=${wlanQuality.label}，蜂窝=${mobileQuality.label}",
                     style = MaterialTheme.typography.bodyMedium
                 )
+
+                // 基础播放进度与拖动 Seek
+                val progress =
+                    if (durationMs > 0) positionMs.toFloat() / durationMs.toFloat() else 0f
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Slider(
+                        value = progress,
+                        onValueChange = { /* 拖动预览可选 */ },
+                        onValueChangeFinished = {
+                            if (durationMs > 0) {
+                                val target = (durationMs * progress).toLong()
+                                controller.player.seekTo(target)
+                            }
+                        }
+                    )
+                    Text(
+                        "进度：${formatMs(positionMs)} / ${formatMs(durationMs)}",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                }
 
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Button(onClick = { showSheet = true }) {
                         Text("清晰度：${selectedQuality.label}")
                     }
                     Button(onClick = {
-                        val activity = context as Activity
                         SystemUiUtil.enterFullScreen(activity)
                         isFullscreen = true
                     }) {
@@ -141,7 +184,7 @@ fun VideoDetailScreen(
                 }
 
                 Text(
-                    "说明：这里用不同 sample 视频 URL 模拟清晰度切换，后续接真实多码率地址。",
+                    "说明：使用不同 sample URL 模拟清晰度切换，后续接真实多码率地址。",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -177,4 +220,11 @@ fun VideoDetailScreen(
             }
         }
     }
+}
+
+private fun formatMs(ms: Long): String {
+    val totalSec = ms / 1000
+    val m = totalSec / 60
+    val s = totalSec % 60
+    return "%02d:%02d".format(m, s)
 }
