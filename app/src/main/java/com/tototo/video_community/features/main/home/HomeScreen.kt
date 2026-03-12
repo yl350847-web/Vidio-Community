@@ -1,10 +1,12 @@
 package com.tototo.video_community.features.main.home
 
+import android.net.Uri
 import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -17,26 +19,26 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.tototo.video_community.nav.AppRoute
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun HomeScreen(
     onNavigateToSearch: (String) -> Unit,
-    viewModel: HomeViewModel = koinViewModel()
+    viewModel: HomeViewModel = koinViewModel(),
+    onNavigateToVideoDetail: (String) -> Unit = {}
 ) {
     val uiState = viewModel.uiState.value
 
@@ -53,16 +55,12 @@ fun HomeScreen(
 
         when {
             uiState.isRefreshing || (uiState.items.isEmpty() && uiState.errorMessage == null) -> {
-                // 刷新中或首次加载中：显示骨架占位
                 LazyColumn(
                     contentPadding = PaddingValues(vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    items(6) { SkeletonCard() }
-                }
+                ) { items(6) { SkeletonCard() } }
             }
             uiState.errorMessage != null -> {
-                // 错误态：显示文案 + 重试
                 Column(
                     modifier = Modifier.fillMaxSize(),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -73,19 +71,22 @@ fun HomeScreen(
                 }
             }
             else -> {
-                // 正常内容
                 LazyColumn(
                     contentPadding = PaddingValues(vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    items(uiState.items) { item ->
+                    items(uiState.items) { video ->
                         ItemCard(
-                            title = item.title,
-                            subtitle = item.subtitle,
-                            imageUrl = item.imageUrl,
+                            title = video.title,
+                            subtitle = video.desc,
+                            imageUrl = video.coverUrl,
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .clickable { onNavigateToSearch(item.title) }
+                                .clickable {
+                                    val route = "${AppRoute.VideoDetail}?id=${Uri.encode(video.id)}"
+                                    onNavigateToVideoDetail(route)
+                                },
+                            onSearchClick = { onNavigateToSearch(video.title) }
                         )
                     }
                 }
@@ -99,7 +100,8 @@ private fun ItemCard(
     title: String,
     subtitle: String,
     imageUrl: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onSearchClick: () -> Unit
 ) {
     Surface(modifier = modifier) {
         Column(horizontalAlignment = Alignment.Start) {
@@ -117,15 +119,12 @@ private fun ItemCard(
             ) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
                 Text(subtitle, style = MaterialTheme.typography.bodyMedium)
+                OutlinedButton(onClick = onSearchClick) { Text("用标题搜索") }
             }
         }
     }
 }
 
-/**
- * 骨架卡片：使用 alpha 脉动模拟“在加载中”的视觉效果
- * 不引入外部依赖，仅用 Compose 的 infiniteTransition
- */
 @Composable
 private fun SkeletonCard() {
     val transition = rememberInfiniteTransition(label = "skeleton")
@@ -142,27 +141,9 @@ private fun SkeletonCard() {
 
     Surface {
         Column {
-            // 顶部图片占位
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(160.dp)
-                    .background(baseColor.copy(alpha = alpha))
-            )
-            // 标题占位
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(20.dp)
-                    .background(baseColor.copy(alpha = alpha))
-            )
-            // 副标题占位
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(16.dp)
-                    .background(baseColor.copy(alpha = alpha))
-            )
+            Box(Modifier.fillMaxWidth().height(160.dp).background(baseColor.copy(alpha = alpha)))
+            Box(Modifier.fillMaxWidth().height(20.dp).background(baseColor.copy(alpha = alpha)))
+            Box(Modifier.fillMaxWidth().height(16.dp).background(baseColor.copy(alpha = alpha)))
         }
     }
 }

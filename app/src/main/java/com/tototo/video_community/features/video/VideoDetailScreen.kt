@@ -1,6 +1,7 @@
 package com.tototo.video_community.features.video
 
 import android.app.Activity
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -19,11 +21,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
@@ -31,17 +36,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
 import androidx.media3.ui.PlayerView
 import com.tototo.video_community.data.local.VideoQuality
 import com.tototo.video_community.features.setting.SettingsViewModel
 import com.tototo.video_community.ui.util.SystemUiUtil
-import org.koin.androidx.compose.koinViewModel
-import androidx.activity.compose.BackHandler
-import androidx.compose.material3.Slider
-import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.delay
+import org.koin.androidx.compose.koinViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,13 +68,29 @@ fun VideoDetailScreen(
     var selectedQuality by remember { mutableStateOf(VideoQuality.P720) }
     var isFullscreen by remember { mutableStateOf(false) }
 
-    // 播放进度（基础版）
     var durationMs by remember { mutableLongStateOf(0L) }
     var positionMs by remember { mutableLongStateOf(0L) }
+    var sliderValue by remember { mutableFloatStateOf(0f) }
+    var isUserDragging by remember { mutableStateOf(false) }
 
-    // 兜底释放与恢复竖屏
+    var isBuffering by remember { mutableStateOf(false) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var currentUrl by remember { mutableStateOf("") }
+
     DisposableEffect(Unit) {
+        val listener = object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                isBuffering = playbackState == Player.STATE_BUFFERING
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                errorMessage = error.message ?: "播放出错"
+            }
+        }
+        controller.player.addListener(listener)
+
         onDispose {
+            controller.player.removeListener(listener)
             if (isFullscreen) {
                 SystemUiUtil.exitFullScreen(activity)
             }
@@ -78,25 +98,30 @@ fun VideoDetailScreen(
         }
     }
 
-    // 默认画质进入时播放
     LaunchedEffect(wlanQuality) {
         val q = if (wlanQuality == VideoQuality.AUTO) VideoQuality.P720 else wlanQuality
         selectedQuality = q
         val url = sources.firstOrNull { it.quality == q }?.url ?: sources.first().url
+        currentUrl = url
+        errorMessage = null
         controller.play(url)
     }
 
-    // 全屏时优先处理返回键：退出全屏再返回
     BackHandler(enabled = isFullscreen) {
         SystemUiUtil.exitFullScreen(activity)
         isFullscreen = false
     }
 
-    // 定时刷新进度（基础版）
     LaunchedEffect(controller.player) {
         while (true) {
-            durationMs = controller.player.duration.coerceAtLeast(0L)
+            val d = controller.player.duration
+            durationMs = if (d > 0) d else 0L
             positionMs = controller.player.currentPosition.coerceAtLeast(0L)
+            if (!isUserDragging) {
+                sliderValue = if (durationMs > 0) {
+                    (positionMs.toFloat() / durationMs.toFloat()).coerceIn(0f, 1f)
+                } else 0f
+            }
             delay(500)
         }
     }
@@ -143,21 +168,41 @@ fun VideoDetailScreen(
             )
 
             if (!isFullscreen) {
+                if (isBuffering) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        CircularProgressIndicator()
+                        Text("缓冲中…", style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+
+                if (errorMessage != null) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text("错误：${errorMessage ?: ""}")
+                        Button(onClick = {
+                            errorMessage = null
+                            if (currentUrl.isNotBlank()) controller.play(currentUrl)
+                        }) {
+                            Text("重试播放")
+                        }
+                    }
+                }
+
                 Text(
                     "默认画质：WLAN=${wlanQuality.label}，蜂窝=${mobileQuality.label}",
                     style = MaterialTheme.typography.bodyMedium
                 )
 
-                // 基础播放进度与拖动 Seek
-                val progress =
-                    if (durationMs > 0) positionMs.toFloat() / durationMs.toFloat() else 0f
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     Slider(
-                        value = progress,
-                        onValueChange = { /* 拖动预览可选 */ },
+                        value = sliderValue,
+                        onValueChange = {
+                            isUserDragging = true
+                            sliderValue = it
+                        },
                         onValueChangeFinished = {
+                            isUserDragging = false
                             if (durationMs > 0) {
-                                val target = (durationMs * progress).toLong()
+                                val target = (durationMs * sliderValue).toLong()
                                 controller.player.seekTo(target)
                             }
                         }
@@ -182,12 +227,6 @@ fun VideoDetailScreen(
                         Text("暂停")
                     }
                 }
-
-                Text(
-                    "说明：使用不同 sample URL 模拟清晰度切换，后续接真实多码率地址。",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
             }
         }
     }
@@ -210,6 +249,8 @@ fun VideoDetailScreen(
                                 selected = selectedQuality == src.quality,
                                 onClick = {
                                     selectedQuality = src.quality
+                                    currentUrl = src.url
+                                    errorMessage = null
                                     controller.play(src.url)
                                     showSheet = false
                                 }

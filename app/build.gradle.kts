@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 android {
@@ -64,6 +65,8 @@ dependencies {
     // --- Coil 3 (图片加载) ---
     implementation(libs.bundles.coil)
 
+
+    implementation(libs.kotlinx.serialization.json)
 
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui)

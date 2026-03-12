@@ -13,6 +13,7 @@ import com.tototo.video_community.features.main.subscription.SubscriptionViewMod
 import com.tototo.video_community.data.local.SearchHistoryRepository
 import com.tototo.video_community.data.local.ThemePreferenceRepository
 import com.tototo.video_community.data.local.VideoPreferencesRepository
+import com.tototo.video_community.data.repository.VideoRepository
 import com.tototo.video_community.features.setting.SettingsViewModel
 import com.tototo.video_community.ui.viewmodel.ThemeViewModel
 
@@ -23,6 +24,7 @@ val appModule = module {
     single { SearchHistoryRepository(androidContext()) }
     single { ThemePreferenceRepository(androidContext()) }
     single { VideoPreferencesRepository(androidContext()) }
+    single { VideoRepository (androidContext()) }
 }
 
 val viewModelModule = module {

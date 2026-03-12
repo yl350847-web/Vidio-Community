@@ -20,6 +20,8 @@ import com.tototo.video_community.features.search.SearchScreen
 import com.tototo.video_community.features.setting.SettingScreen
 import com.tototo.video_community.features.splash.SplashScreen
 import com.tototo.video_community.features.video.VideoDetailScreen
+import com.tototo.video_community.data.repository.VideoRepository
+import org.koin.compose.koinInject
 
 @Composable
 fun AppNav(
@@ -38,6 +40,8 @@ fun AppNav(
         }
     }
 
+    val videoRepo = koinInject<VideoRepository>()
+
     NavHost(
         navController = appNavController,
         startDestination = AppRoute.Splash,
@@ -45,8 +49,7 @@ fun AppNav(
     ) {
         composable(AppRoute.Splash) {
             SplashScreen {
-                val nextRoute = AppRoute.MainNav
-                appNavController.navigate(nextRoute) {
+                appNavController.navigate(AppRoute.MainNav) {
                     popUpTo(AppRoute.Splash) { inclusive = true }
                     launchSingleTop = true
                 }
@@ -79,23 +82,19 @@ fun AppNav(
         }
 
         composable(
-            route = "${AppRoute.VideoDetail}?title={title}&cover={cover}",
+            route = "${AppRoute.VideoDetail}?id={id}",
             arguments = listOf(
-                navArgument("title") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                },
-                navArgument("cover") {
+                navArgument("id") {
                     type = NavType.StringType
                     defaultValue = ""
                 }
             )
         ) { backStackEntry ->
-            val title = backStackEntry.arguments?.getString("title").orEmpty()
-            val cover = backStackEntry.arguments?.getString("cover").orEmpty()
+            val id = backStackEntry.arguments?.getString("id").orEmpty()
+            val video = videoRepo.getById(id)
             VideoDetailScreen(
-                title = title,
-                coverUrl = cover,
+                title = video?.title.orEmpty(),
+                coverUrl = video?.coverUrl.orEmpty(),
                 onBack = { appNavController.popBackStack() }
             )
         }

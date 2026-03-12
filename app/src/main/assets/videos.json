@@ -1,0 +1,25 @@
+{
+  "videos": [
+    {
+      "id": "v1",
+      "title": "大耳兔",
+      "coverUrl": "https://picsum.photos/seed/v1/800/400",
+      "playUrl": "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-720p.mp4",
+      "desc": "示例视频：用于演示视频播放、清晰度切换、进度条控制等功能。"
+    },
+    {
+      "id": "v2",
+      "title": "大象梦境",
+      "coverUrl": "https://picsum.photos/seed/v2/800/400",
+      "playUrl": "https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-1080p.mp4",
+      "desc": "示例视频：用于演示从视频列表进入详情页后播放的完整流程。"
+    },
+    {
+      "id": "v3",
+      "title": "欢乐骑行",
+      "coverUrl": "https://picsum.photos/seed/v3/800/400",
+      "playUrl": "https://vjs.zencdn.net/v/oceans.mp4",
+      "desc": "示例视频：用于演示列表分页加载、骨架屏展示与异常错误处理。"
+    }
+  ]
+}
