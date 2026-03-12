@@ -64,6 +64,10 @@ dependencies {
     // --- Coil 3 (图片加载) ---
     implementation(libs.bundles.coil)
 
+
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
+
     // --- OkHttp (Coil 网络底层) ---
     // 已由 coil-network-okhttp 传递依赖，无需显式添加
     implementation(libs.androidx.paging.runtime)

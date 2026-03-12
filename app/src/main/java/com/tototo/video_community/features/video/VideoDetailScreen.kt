@@ -1,7 +1,9 @@
 package com.tototo.video_community.features.video
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,18 +14,31 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
+import androidx.media3.ui.PlayerView
+import com.tototo.video_community.data.local.VideoQuality
 import com.tototo.video_community.features.setting.SettingsViewModel
+import com.tototo.video_community.ui.util.SystemUiUtil
 import org.koin.androidx.compose.koinViewModel
+import androidx.activity.compose.BackHandler
+import androidx.compose.runtime.collectAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -33,19 +48,47 @@ fun VideoDetailScreen(
     onBack: () -> Unit,
     settingsViewModel: SettingsViewModel = koinViewModel()
 ) {
+    val context = LocalContext.current
+    val controller = remember { VideoPlayerController(context) }
+
     val wlanQuality = settingsViewModel.wlanQuality.collectAsState().value
     val mobileQuality = settingsViewModel.mobileQuality.collectAsState().value
 
+    val sources = remember { VideoQualitySource.sources() }
+
+    var showSheet by remember { mutableStateOf(false) }
+    var selectedQuality by remember { mutableStateOf(VideoQuality.P720) }
+    var isFullscreen by remember { mutableStateOf(false) }
+
+    DisposableEffect(Unit) {
+        onDispose { controller.release() }
+    }
+
+    LaunchedEffect(wlanQuality) {
+        val q = if (wlanQuality == VideoQuality.AUTO) VideoQuality.P720 else wlanQuality
+        selectedQuality = q
+        val url = sources.firstOrNull { it.quality == q }?.url ?: sources.first().url
+        controller.play(url)
+    }
+
+    BackHandler(enabled = isFullscreen) {
+        val activity = context as Activity
+        SystemUiUtil.exitFullScreen(activity)
+        isFullscreen = false
+    }
+
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("视频详情") },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
+            if (!isFullscreen) {
+                TopAppBar(
+                    title = { Text("视频详情") },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
+                        }
                     }
-                }
-            )
+                )
+            }
         }
     ) { innerPadding ->
         Column(
@@ -55,30 +98,82 @@ fun VideoDetailScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text(title.ifBlank { "未命名视频" }, style = MaterialTheme.typography.titleLarge)
+            if (!isFullscreen) {
+                Text(title.ifBlank { "未命名视频" }, style = MaterialTheme.typography.titleLarge)
+            }
 
-            AsyncImage(
-                model = coverUrl,
-                contentDescription = null,
+            AndroidView(
+                factory = {
+                    PlayerView(it).apply {
+                        player = controller.player
+                        useController = true
+                    }
+                },
+                modifier = if (isFullscreen) {
+                    Modifier.fillMaxSize()
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .height(220.dp)
+                }
+            )
+
+            if (!isFullscreen) {
+                Text(
+                    "默认画质偏好：WLAN=${wlanQuality.label}，蜂窝=${mobileQuality.label}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Button(onClick = { showSheet = true }) {
+                        Text("清晰度：${selectedQuality.label}")
+                    }
+                    Button(onClick = {
+                        val activity = context as Activity
+                        SystemUiUtil.enterFullScreen(activity)
+                        isFullscreen = true
+                    }) {
+                        Text("全屏")
+                    }
+                    Button(onClick = { controller.pause() }) {
+                        Text("暂停")
+                    }
+                }
+
+                Text(
+                    "说明：这里用不同 sample 视频 URL 模拟清晰度切换，后续接真实多码率地址。",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+
+    if (showSheet) {
+        ModalBottomSheet(onDismissRequest = { showSheet = false }) {
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp),
-                contentScale = ContentScale.Crop
-            )
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text("选择清晰度", style = MaterialTheme.typography.titleMedium)
 
-            Text(
-                "这里是简介占位：后续会接入真实 API（aid/bvid）来获取详情。",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-
-            Text(
-                "默认画质偏好（演示）：WLAN=${wlanQuality.label}，蜂窝=${mobileQuality.label}",
-                style = MaterialTheme.typography.bodyMedium
-            )
-
-            Button(onClick = { }) {
-                Text("播放（下一步接入 Media3）")
+                sources.forEach { src ->
+                    ListItem(
+                        headlineContent = { Text(src.quality.label) },
+                        trailingContent = {
+                            RadioButton(
+                                selected = selectedQuality == src.quality,
+                                onClick = {
+                                    selectedQuality = src.quality
+                                    controller.play(src.url)
+                                    showSheet = false
+                                }
+                            )
+                        }
+                    )
+                }
             }
         }
     }
