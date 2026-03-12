@@ -62,15 +62,14 @@ fun MainNav(
     val isDesktop = width >= 840
     val isTablet = width in 600..839
 
-    // 定义跳转逻辑
     val onSearchClick = { appNavigateTo(AppRoute.Search) }
     val onNavigateToSearchWithQuery: (String) -> Unit = { q ->
         val route = "${AppRoute.Search}?q=${Uri.encode(q)}"
         appNavigateTo(route)
     }
     val onNavigateToSetting = { appNavigateTo(AppRoute.Setting) }
+    val onNavigateToVideoDetail: (String) -> Unit = { route -> appNavigateTo(route) }
 
-    // 根据设备类型选择布局容器
     when {
         isDesktop || (!isPortrait && isTablet) -> {
             DesktopOrTabletContent(
@@ -80,7 +79,8 @@ fun MainNav(
                 onSearchClick = onSearchClick,
                 onNavigate = { route -> navController.navigate(route) },
                 onNavigateToSearchWithQuery = onNavigateToSearchWithQuery,
-                onNavigateToSetting = onNavigateToSetting
+                onNavigateToSetting = onNavigateToSetting,
+                onNavigateToVideoDetail = onNavigateToVideoDetail
             )
         }
         isPortrait -> {
@@ -91,7 +91,8 @@ fun MainNav(
                 onSearchClick = onSearchClick,
                 onNavigate = { route -> navController.navigate(route) },
                 onNavigateToSearchWithQuery = onNavigateToSearchWithQuery,
-                onNavigateToSetting = onNavigateToSetting
+                onNavigateToSetting = onNavigateToSetting,
+                onNavigateToVideoDetail = onNavigateToVideoDetail
             )
         }
         else -> {
@@ -102,7 +103,8 @@ fun MainNav(
                 onSearchClick = onSearchClick,
                 onNavigate = { route -> navController.navigate(route) },
                 onNavigateToSearchWithQuery = onNavigateToSearchWithQuery,
-                onNavigateToSetting = onNavigateToSetting
+                onNavigateToSetting = onNavigateToSetting,
+                onNavigateToVideoDetail = onNavigateToVideoDetail
             )
         }
     }
@@ -116,7 +118,8 @@ private fun PortraitContent(
     onSearchClick: () -> Unit,
     onNavigate: (String) -> Unit,
     onNavigateToSearchWithQuery: (String) -> Unit,
-    onNavigateToSetting: () -> Unit
+    onNavigateToSetting: () -> Unit,
+    onNavigateToVideoDetail: (String) -> Unit
 ) {
     Column(Modifier.fillMaxSize()) {
         TopBar(onSearchClick)
@@ -124,7 +127,8 @@ private fun PortraitContent(
             MainNavHost(
                 navController = navController,
                 onNavigateToSearchWithQuery = onNavigateToSearchWithQuery,
-                onNavigateToSetting = onNavigateToSetting
+                onNavigateToSetting = onNavigateToSetting,
+                onNavigateToVideoDetail = onNavigateToVideoDetail
             )
         }
         NavigationBar {
@@ -148,7 +152,8 @@ private fun LandscapeContent(
     onSearchClick: () -> Unit,
     onNavigate: (String) -> Unit,
     onNavigateToSearchWithQuery: (String) -> Unit,
-    onNavigateToSetting: () -> Unit
+    onNavigateToSetting: () -> Unit,
+    onNavigateToVideoDetail: (String) -> Unit
 ) {
     Column(Modifier.fillMaxSize()) {
         TopBar(onSearchClick)
@@ -158,7 +163,8 @@ private fun LandscapeContent(
                 MainNavHost(
                     navController = navController,
                     onNavigateToSearchWithQuery = onNavigateToSearchWithQuery,
-                    onNavigateToSetting = onNavigateToSetting
+                    onNavigateToSetting = onNavigateToSetting,
+                    onNavigateToVideoDetail = onNavigateToVideoDetail
                 )
             }
         }
@@ -173,7 +179,8 @@ private fun DesktopOrTabletContent(
     onSearchClick: () -> Unit,
     onNavigate: (String) -> Unit,
     onNavigateToSearchWithQuery: (String) -> Unit,
-    onNavigateToSetting: () -> Unit
+    onNavigateToSetting: () -> Unit,
+    onNavigateToVideoDetail: (String) -> Unit
 ) {
     Column(Modifier.fillMaxSize()) {
         TopBar(onSearchClick)
@@ -183,7 +190,8 @@ private fun DesktopOrTabletContent(
                 MainNavHost(
                     navController = navController,
                     onNavigateToSearchWithQuery = onNavigateToSearchWithQuery,
-                    onNavigateToSetting = onNavigateToSetting
+                    onNavigateToSetting = onNavigateToSetting,
+                    onNavigateToVideoDetail = onNavigateToVideoDetail
                 )
             }
         }
@@ -211,7 +219,6 @@ private fun SideNavigateRail(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun TopBar(onSearchClick: () -> Unit) {
-    // 主题切换已移至 Setting 页面，TopBar 只保留搜索
     TopAppBar(
         title = { Text("BiliTube") },
         actions = {
@@ -226,19 +233,18 @@ private fun TopBar(onSearchClick: () -> Unit) {
 private fun MainNavHost(
     navController: NavHostController,
     onNavigateToSearchWithQuery: (String) -> Unit,
-    onNavigateToSetting: () -> Unit
+    onNavigateToSetting: () -> Unit,
+    onNavigateToVideoDetail: (String) -> Unit
 ) {
     NavHost(
         navController = navController,
         startDestination = MainRoute.Home
     ) {
         composable(MainRoute.Home) {
-            HomeScreen(
-                onNavigateToSearch = onNavigateToSearchWithQuery
-            )
+            HomeScreen(onNavigateToSearch = onNavigateToSearchWithQuery)
         }
         composable(MainRoute.Subscription) {
-            SubscriptionScreen()
+            SubscriptionScreen(onNavigateToVideoDetail = onNavigateToVideoDetail)
         }
         composable(MainRoute.Profile) {
             ProfileScreen(onNavigateToSetting = onNavigateToSetting)

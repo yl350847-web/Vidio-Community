@@ -19,6 +19,7 @@ import com.tototo.video_community.features.main.MainNav
 import com.tototo.video_community.features.search.SearchScreen
 import com.tototo.video_community.features.setting.SettingScreen
 import com.tototo.video_community.features.splash.SplashScreen
+import com.tototo.video_community.features.video.VideoDetailScreen
 
 @Composable
 fun AppNav(
@@ -51,12 +52,15 @@ fun AppNav(
                 }
             }
         }
+
         composable(AppRoute.LoginNav) { LoginNav() }
+
         composable(AppRoute.MainNav) {
             MainNav(
                 appNavigateTo = { route -> appNavController.navigate(route) }
             )
         }
+
         composable(
             route = "${AppRoute.Search}?q={q}",
             arguments = listOf(
@@ -69,9 +73,31 @@ fun AppNav(
             val query = backStackEntry.arguments?.getString("q").orEmpty()
             SearchScreen(initialQuery = query)
         }
-        // 新增 Setting 路由
+
         composable(AppRoute.Setting) {
             SettingScreen(onBack = { appNavController.popBackStack() })
+        }
+
+        composable(
+            route = "${AppRoute.VideoDetail}?title={title}&cover={cover}",
+            arguments = listOf(
+                navArgument("title") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                },
+                navArgument("cover") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
+        ) { backStackEntry ->
+            val title = backStackEntry.arguments?.getString("title").orEmpty()
+            val cover = backStackEntry.arguments?.getString("cover").orEmpty()
+            VideoDetailScreen(
+                title = title,
+                coverUrl = cover,
+                onBack = { appNavController.popBackStack() }
+            )
         }
     }
 }

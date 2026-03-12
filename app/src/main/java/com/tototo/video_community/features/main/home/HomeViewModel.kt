@@ -1,7 +1,5 @@
 package com.tototo.video_community.features.main.home
 
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.State
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tototo.video_community.data.repository.FakeHomeRepository
@@ -19,8 +17,8 @@ class HomeViewModel(
     private val repo: FakeHomeRepository
 ) : ViewModel() {
     private var initialLoaded = false
-    private var _uiState = mutableStateOf(HomeUiState())
-    val uiState: State<HomeUiState> get() = _uiState
+    private var _uiState = androidx.compose.runtime.mutableStateOf(HomeUiState())
+    val uiState: androidx.compose.runtime.State<HomeUiState> get() = _uiState
 
     init {
         // 首次加载

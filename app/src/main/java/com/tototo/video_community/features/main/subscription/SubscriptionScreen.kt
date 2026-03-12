@@ -1,11 +1,13 @@
 package com.tototo.video_community.features.main.subscription
 
+import android.net.Uri
 import androidx.compose.animation.core.InfiniteRepeatableSpec
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -29,11 +31,13 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
+import com.tototo.video_community.nav.AppRoute
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun SubscriptionScreen(
-    viewModel: SubscriptionViewModel = koinViewModel()
+    viewModel: SubscriptionViewModel = koinViewModel(),
+    onNavigateToVideoDetail: (String) -> Unit = {}
 ) {
     val lazyItems = viewModel.items.collectAsLazyPagingItems()
 
@@ -41,12 +45,10 @@ fun SubscriptionScreen(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // 顶部刷新按钮（触发 Pagination 的 refresh）
         Button(onClick = { lazyItems.refresh() }) { Text("刷新") }
 
         when (val s = lazyItems.loadState.refresh) {
             is LoadState.Loading -> {
-                // 显示骨架网格
                 LazyVerticalGrid(
                     columns = GridCells.Fixed(2),
                     contentPadding = PaddingValues(12.dp)
@@ -71,7 +73,15 @@ fun SubscriptionScreen(
                         items(lazyItems.itemCount) { index ->
                             val item = lazyItems[index]
                             if (item != null) {
-                                GridItemCard(title = item.title, imageUrl = item.imageUrl)
+                                GridItemCard(
+                                    title = item.title,
+                                    imageUrl = item.imageUrl,
+                                    onClick = {
+                                        val route =
+                                            "${AppRoute.VideoDetail}?title=${Uri.encode(item.title)}&cover=${Uri.encode(item.imageUrl)}"
+                                        onNavigateToVideoDetail(route)
+                                    }
+                                )
                             }
                         }
                         when (val a = lazyItems.loadState.append) {
@@ -125,9 +135,10 @@ private fun ColumnEmpty(
 @Composable
 private fun GridItemCard(
     title: String,
-    imageUrl: String
+    imageUrl: String,
+    onClick: () -> Unit
 ) {
-    Surface {
+    Surface(modifier = Modifier.clickable { onClick() }) {
         AsyncImage(
             model = imageUrl,
             contentDescription = null,
@@ -140,9 +151,6 @@ private fun GridItemCard(
     }
 }
 
-/**
- * 网格骨架卡片：上方大图占位 + 下方一条标题占位
- */
 @Composable
 private fun GridSkeletonCard() {
     val transition = rememberInfiniteTransition(label = "gridSkeleton")
