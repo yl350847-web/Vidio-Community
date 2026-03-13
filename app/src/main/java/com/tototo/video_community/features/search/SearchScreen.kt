@@ -1,5 +1,6 @@
 package com.tototo.video_community.features.search
 
+import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -8,9 +9,9 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
@@ -29,11 +30,10 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
 import com.tototo.video_community.nav.AppRoute
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.androidx.compose.koinViewModel
-import android.net.Uri
-import kotlinx.coroutines.FlowPreview
 
 @OptIn(FlowPreview::class)
 @Composable
@@ -73,6 +73,7 @@ fun SearchScreen(
             modifier = Modifier.fillMaxWidth(),
             label = { Text("搜索关键字") }
         )
+
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -93,6 +94,7 @@ fun SearchScreen(
                 }
             }
         }
+
         Button(onClick = { viewModel.loadManual(input.value) }) {
             Text("搜索")
         }
@@ -104,9 +106,7 @@ fun SearchScreen(
             is LoadState.Error -> {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("加载失败：${s.error.message ?: "未知错误"}")
-                    Button(onClick = { lazyItems.retry() }) {
-                        Text("重试")
-                    }
+                    Button(onClick = { lazyItems.retry() }) { Text("重试") }
                 }
             }
             is LoadState.NotLoading -> {
@@ -133,8 +133,8 @@ fun SearchScreen(
                                         .height(160.dp),
                                     contentScale = ContentScale.Crop
                                 )
-                                Text(item.title)
-                                Text(item.desc)
+                                Text(item.title, style = androidx.compose.material3.MaterialTheme.typography.titleMedium)
+                                Text(item.desc, style = androidx.compose.material3.MaterialTheme.typography.bodyMedium)
                             }
                         }
                     }

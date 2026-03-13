@@ -1,5 +1,6 @@
 package com.tototo.video_community.nav
 
+import android.net.Uri
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -81,7 +82,13 @@ fun AppNav(
         }
 
         composable(AppRoute.Setting) {
-            SettingScreen(onBack = { appNavController.popBackStack() })
+            SettingScreen(
+                onBack = { appNavController.popBackStack() },
+                onNavigateToSearch = { q ->
+                    val route = "${AppRoute.Search}?q=${Uri.encode(q)}"
+                    appNavController.navigate(route)
+                }
+            )
         }
 
         composable(

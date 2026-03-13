@@ -26,7 +26,7 @@ class HomeViewModel(
     fun reload() {
         _uiState.value = _uiState.value.copy(isRefreshing = true, errorMessage = null)
         viewModelScope.launch {
-            delay(600)
+            delay(500)
             try {
                 val list = repo.getAll()
                 _uiState.value = HomeUiState(items = list, isRefreshing = false, errorMessage = null)

@@ -6,7 +6,6 @@ import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +24,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -37,8 +35,8 @@ import org.koin.androidx.compose.koinViewModel
 @Composable
 fun HomeScreen(
     onNavigateToSearch: (String) -> Unit,
-    viewModel: HomeViewModel = koinViewModel(),
-    onNavigateToVideoDetail: (String) -> Unit = {}
+    onNavigateToVideoDetail: (String) -> Unit = {},
+    viewModel: HomeViewModel = koinViewModel()
 ) {
     val uiState = viewModel.uiState.value
 
@@ -58,7 +56,9 @@ fun HomeScreen(
                 LazyColumn(
                     contentPadding = PaddingValues(vertical = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) { items(6) { SkeletonCard() } }
+                ) {
+                    items(6) { SkeletonCard() }
+                }
             }
             uiState.errorMessage != null -> {
                 Column(
@@ -76,16 +76,14 @@ fun HomeScreen(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(uiState.items) { video ->
-                        ItemCard(
+                        VideoCard(
                             title = video.title,
-                            subtitle = video.desc,
-                            imageUrl = video.coverUrl,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable {
-                                    val route = "${AppRoute.VideoDetail}?id=${Uri.encode(video.id)}"
-                                    onNavigateToVideoDetail(route)
-                                },
+                            desc = video.desc,
+                            coverUrl = video.coverUrl,
+                            onClick = {
+                                val route = "${AppRoute.VideoDetail}?id=${Uri.encode(video.id)}"
+                                onNavigateToVideoDetail(route)
+                            },
                             onSearchClick = { onNavigateToSearch(video.title) }
                         )
                     }
@@ -96,29 +94,26 @@ fun HomeScreen(
 }
 
 @Composable
-private fun ItemCard(
+private fun VideoCard(
     title: String,
-    subtitle: String,
-    imageUrl: String,
-    modifier: Modifier = Modifier,
+    desc: String,
+    coverUrl: String,
+    onClick: () -> Unit,
     onSearchClick: () -> Unit
 ) {
-    Surface(modifier = modifier) {
-        Column(horizontalAlignment = Alignment.Start) {
+    Surface(modifier = Modifier.fillMaxWidth().clickable { onClick() }) {
+        Column {
             AsyncImage(
-                model = imageUrl,
+                model = coverUrl,
                 contentDescription = null,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(160.dp),
                 contentScale = ContentScale.Crop
             )
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.Start
-            ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
                 Text(title, style = MaterialTheme.typography.titleMedium)
-                Text(subtitle, style = MaterialTheme.typography.bodyMedium)
+                Text(desc, style = MaterialTheme.typography.bodyMedium)
                 OutlinedButton(onClick = onSearchClick) { Text("用标题搜索") }
             }
         }
@@ -128,7 +123,7 @@ private fun ItemCard(
 @Composable
 private fun SkeletonCard() {
     val transition = rememberInfiniteTransition(label = "skeleton")
-    val alpha by transition.animateFloat(
+    val alpha = transition.animateFloat(
         initialValue = 0.3f,
         targetValue = 0.7f,
         animationSpec = InfiniteRepeatableSpec(
@@ -136,7 +131,7 @@ private fun SkeletonCard() {
             repeatMode = RepeatMode.Reverse
         ),
         label = "alpha"
-    )
+    ).value
     val baseColor = MaterialTheme.colorScheme.surfaceVariant
 
     Surface {

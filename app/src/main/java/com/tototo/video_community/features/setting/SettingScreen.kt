@@ -22,27 +22,27 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.tototo.video_community.ui.viewmodel.ThemeViewModel
 import com.tototo.video_community.data.local.SearchHistoryRepository
+import com.tototo.video_community.ui.viewmodel.ThemeViewModel
+import kotlinx.coroutines.launch
 import org.koin.androidx.compose.koinViewModel
 import org.koin.compose.koinInject
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingScreen(
     onBack: () -> Unit,
+    onNavigateToSearch: (String) -> Unit,
     themeViewModel: ThemeViewModel = koinViewModel()
 ) {
     val isDark = themeViewModel.isDark.collectAsState().value
     val isDynamicColor = themeViewModel.isDynamicColor.collectAsState().value
     val dynamicSupported = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
-    // 搜索历史
     val historyRepo = koinInject<SearchHistoryRepository>()
     val recents = historyRepo.recentQueries.collectAsState(initial = emptyList()).value
     val scope = rememberCoroutineScope()
@@ -66,7 +66,6 @@ fun SettingScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // 深色模式
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -86,7 +85,6 @@ fun SettingScreen(
                 )
             }
 
-            // 动态取色
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -103,18 +101,14 @@ fun SettingScreen(
                 }
                 Switch(
                     checked = if (dynamicSupported) isDynamicColor else false,
-                    onCheckedChange = {
-                        if (dynamicSupported) {
-                            themeViewModel.toggleDynamicColor()
-                        }
-                    },
+                    onCheckedChange = { if (dynamicSupported) themeViewModel.toggleDynamicColor() },
                     enabled = dynamicSupported
                 )
             }
 
-            // 最近搜索历史
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Text("最近搜索", style = MaterialTheme.typography.titleMedium)
+
                 if (recents.isEmpty()) {
                     Text(
                         "暂无历史",
@@ -130,7 +124,7 @@ fun SettingScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         recents.forEach { q ->
-                            OutlinedButton(onClick = { /* 留空：此页仅展示与管理 */ }) {
+                            OutlinedButton(onClick = { onNavigateToSearch(q) }) {
                                 Text(q)
                             }
                         }

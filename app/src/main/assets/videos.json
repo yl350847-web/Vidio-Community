@@ -2,41 +2,41 @@
   "videos": [
     {
       "id": "v1",
-      "title": "杭州西湖航拍",
+      "title": "西湖风光",
       "coverUrl": "https://picsum.photos/seed/v1/800/400",
-      "playUrl": "https://v-cdn.zjol.com.cn/276982.mp4",
-      "desc": "示例：国内 CDN 的样例视频，用于播放链路校验。",
+      "playUrl": "https://sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-720p.mp4",
+      "desc": "国内CDN测试视频，用于播放、清晰度切换演示",
       "sources": {
-        "360P": "https://v-cdn.zjol.com.cn/276984.mp4",
-        "480P": "https://v-cdn.zjol.com.cn/276985.mp4",
-        "720P": "https://v-cdn.zjol.com.cn/276982.mp4",
-        "1080P": "https://v-cdn.zjol.com.cn/279874.mp4"
+        "360P": "https://sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-360p.mp4",
+        "480P": "https://sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-480p.mp4",
+        "720P": "https://sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-720p.mp4",
+        "1080P": "https://sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-1080p.mp4"
       }
     },
     {
       "id": "v2",
-      "title": "城市延时摄影",
+      "title": "城市延时",
       "coverUrl": "https://picsum.photos/seed/v2/800/400",
-      "playUrl": "https://v-cdn.zjol.com.cn/280443.mp4",
-      "desc": "示例：国内视频样例，演示从列表进入详情再播放。",
+      "playUrl": "https://vjs.zencdn.net/v/oceans.mp4",
+      "desc": "公开测试视频，演示列表进入详情页播放",
       "sources": {
-        "360P": "https://v-cdn.zjol.com.cn/276984.mp4",
-        "480P": "https://v-cdn.zjol.com.cn/276985.mp4",
-        "720P": "https://v-cdn.zjol.com.cn/280443.mp4",
-        "1080P": "https://v-cdn.zjol.com.cn/279874.mp4"
+        "360P": "https://sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-360p.mp4",
+        "480P": "https://sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-480p.mp4",
+        "720P": "https://vjs.zencdn.net/v/oceans.mp4",
+        "1080P": "https://sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-1080p.mp4"
       }
     },
     {
       "id": "v3",
-      "title": "自然风光集锦",
+      "title": "自然风景",
       "coverUrl": "https://picsum.photos/seed/v3/800/400",
-      "playUrl": "https://v-cdn.zjol.com.cn/276986.mp4",
-      "desc": "示例：用于分页、骨架、错误处理的演示视频。",
+      "playUrl": "https://www.w3school.com.cn/example/html5/mov_bbb.mp4",
+      "desc": "经典测试视频，用于分页、骨架屏、错误处理演示",
       "sources": {
-        "360P": "https://v-cdn.zjol.com.cn/276984.mp4",
-        "480P": "https://v-cdn.zjol.com.cn/276985.mp4",
-        "720P": "https://v-cdn.zjol.com.cn/276986.mp4",
-        "1080P": "https://v-cdn.zjol.com.cn/279874.mp4"
+        "360P": "https://sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-360p.mp4",
+        "480P": "https://sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-480p.mp4",
+        "720P": "https://www.w3school.com.cn/example/html5/mov_bbb.mp4",
+        "1080P": "https://sf1-cdn-tos.huoshanstatic.com/obj/media-fe/xgplayer_doc_video/mp4/xgplayer-demo-1080p.mp4"
       }
     }
   ]

@@ -2,6 +2,7 @@ package com.tototo.video_community.features.video
 
 import android.app.Activity
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,7 +41,10 @@ import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
@@ -94,6 +98,8 @@ fun VideoDetailScreen(
     var isBuffering by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var currentUrl by remember { mutableStateOf(playUrl) }
+
+    var seekHint by remember { mutableStateOf<String?>(null) }
 
     DisposableEffect(Unit) {
         val listener = object : Player.Listener {
@@ -178,6 +184,12 @@ fun VideoDetailScreen(
         }
     }
 
+    LaunchedEffect(seekHint) {
+        if (seekHint == null) return@LaunchedEffect
+        delay(700)
+        seekHint = null
+    }
+
     if (title.isBlank() || (playUrl.isBlank() && sources.isEmpty())) {
         Column(
             modifier = Modifier
@@ -203,7 +215,20 @@ fun VideoDetailScreen(
     ) {
         Box(
             modifier = (if (isFullscreen) Modifier.fillMaxSize() else Modifier.fillMaxWidth().height(220.dp))
-                .pointerInput(Unit) { detectTapGestures(onTap = { controlsVisible = !controlsVisible }) }
+                .pointerInput(Unit) {
+                    detectTapGestures(
+                        onTap = { controlsVisible = !controlsVisible },
+                        onDoubleTap = { offset: Offset ->
+                            val width = size.width.toFloat().coerceAtLeast(1f)
+                            val isLeft = offset.x < width / 2f
+                            val delta = if (isLeft) -10_000L else 10_000L
+                            val target = (controller.player.currentPosition + delta).coerceAtLeast(0L)
+                            controller.player.seekTo(target)
+                            seekHint = if (isLeft) "快退10秒" else "快进10秒"
+                            controlsVisible = true
+                        }
+                    )
+                }
         ) {
             AndroidView(
                 factory = {
@@ -215,6 +240,27 @@ fun VideoDetailScreen(
                 modifier = Modifier.fillMaxSize()
             )
 
+            if (controlsVisible) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = 0.35f))
+                )
+            }
+
+            if (seekHint != null) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = seekHint ?: "",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = Color.White
+                    )
+                }
+            }
+
             if (errorMessage != null) {
                 Column(
                     modifier = Modifier
@@ -222,7 +268,7 @@ fun VideoDetailScreen(
                         .padding(16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    Text("错误：${errorMessage ?: ""}")
+                    Text("错误：${errorMessage ?: ""}", color = Color.White)
                     Button(onClick = {
                         errorMessage = null
                         if (currentUrl.isNotBlank()) controller.play(currentUrl)
@@ -255,7 +301,7 @@ fun VideoDetailScreen(
                             }
                             controlsVisible = true
                         }) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回", tint = Color.White)
                         }
                         Text(
                             text = title,
@@ -263,13 +309,14 @@ fun VideoDetailScreen(
                                 .weight(1f)
                                 .padding(top = 10.dp),
                             maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
+                            overflow = TextOverflow.Ellipsis,
+                            color = Color.White
                         )
                         IconButton(onClick = {
                             showSheet = true
                             controlsVisible = true
                         }) {
-                            Icon(Icons.Rounded.Settings, contentDescription = "清晰度")
+                            Icon(Icons.Rounded.Settings, contentDescription = "清晰度", tint = Color.White)
                         }
                         IconButton(onClick = {
                             if (isFullscreen) {
@@ -283,7 +330,8 @@ fun VideoDetailScreen(
                         }) {
                             Icon(
                                 if (isFullscreen) Icons.Rounded.FullscreenExit else Icons.Rounded.Fullscreen,
-                                contentDescription = "全屏"
+                                contentDescription = "全屏",
+                                tint = Color.White
                             )
                         }
                     }
@@ -302,10 +350,11 @@ fun VideoDetailScreen(
                             }) {
                                 Icon(
                                     if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
-                                    contentDescription = "播放暂停"
+                                    contentDescription = "播放暂停",
+                                    tint = Color.White
                                 )
                             }
-                            Text("${formatMs(positionMs)} / ${formatMs(durationMs)}")
+                            Text("${formatMs(positionMs)} / ${formatMs(durationMs)}", color = Color.White)
                             Spacer(modifier = Modifier.height(1.dp))
                         }
 
