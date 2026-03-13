@@ -51,9 +51,12 @@ import androidx.media3.common.Player
 import androidx.media3.ui.PlayerView
 import com.tototo.video_community.data.local.VideoQuality
 import com.tototo.video_community.features.setting.SettingsViewModel
+import com.tototo.video_community.ui.util.NetworkMonitor
+import com.tototo.video_community.ui.util.NetworkType
 import com.tototo.video_community.ui.util.SystemUiUtil
 import kotlinx.coroutines.delay
 import org.koin.androidx.compose.koinViewModel
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,6 +65,7 @@ fun VideoDetailScreen(
     coverUrl: String,
     playUrl: String,
     desc: String,
+    sources: Map<String, String>,
     onBack: () -> Unit,
     settingsViewModel: SettingsViewModel = koinViewModel()
 ) {
@@ -72,10 +76,12 @@ fun VideoDetailScreen(
     val wlanQuality = settingsViewModel.wlanQuality.collectAsState().value
     val mobileQuality = settingsViewModel.mobileQuality.collectAsState().value
 
-    val sources = remember { VideoQualitySource.sources() }
+    val networkMonitor = koinInject<NetworkMonitor>()
+    val networkType = networkMonitor.networkType.collectAsState(initial = NetworkType.OTHER).value
 
     var showSheet by remember { mutableStateOf(false) }
-    var selectedQuality by remember { mutableStateOf(VideoQuality.P720) }
+    var selectedQuality by remember { mutableStateOf(VideoQuality.AUTO) }
+
     var isFullscreen by remember { mutableStateOf(false) }
     var controlsVisible by remember { mutableStateOf(true) }
     var isPlaying by remember { mutableStateOf(false) }
@@ -114,14 +120,32 @@ fun VideoDetailScreen(
         }
     }
 
-    LaunchedEffect(playUrl, wlanQuality) {
-        if (playUrl.isBlank()) return@LaunchedEffect
-        val q = if (wlanQuality == VideoQuality.AUTO) VideoQuality.P720 else wlanQuality
-        selectedQuality = q
-        currentUrl = playUrl
+    fun resolvePreferredQuality(): VideoQuality {
+        val preferred = if (networkType == NetworkType.WIFI) wlanQuality else mobileQuality
+        return if (preferred == VideoQuality.AUTO) VideoQuality.P720 else preferred
+    }
+
+    fun resolveUrlForQuality(q: VideoQuality): String {
+        val key = q.code
+        val fromMap = sources[key]
+        return fromMap ?: playUrl
+    }
+
+    fun playByQuality(q: VideoQuality) {
+        val realQ = if (q == VideoQuality.AUTO) resolvePreferredQuality() else q
+        val url = resolveUrlForQuality(realQ)
+        if (url.isBlank()) return
+        currentUrl = url
         errorMessage = null
-        controller.play(playUrl)
-        controlsVisible = true
+        controller.play(url)
+    }
+
+    LaunchedEffect(playUrl, sources, wlanQuality, mobileQuality, networkType) {
+        if (playUrl.isBlank() && sources.isEmpty()) return@LaunchedEffect
+        if (selectedQuality == VideoQuality.AUTO) {
+            playByQuality(VideoQuality.AUTO)
+            controlsVisible = true
+        }
     }
 
     BackHandler(enabled = isFullscreen) {
@@ -154,7 +178,7 @@ fun VideoDetailScreen(
         }
     }
 
-    if (title.isBlank() || playUrl.isBlank()) {
+    if (title.isBlank() || (playUrl.isBlank() && sources.isEmpty())) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -179,9 +203,7 @@ fun VideoDetailScreen(
     ) {
         Box(
             modifier = (if (isFullscreen) Modifier.fillMaxSize() else Modifier.fillMaxWidth().height(220.dp))
-                .pointerInput(Unit) {
-                    detectTapGestures(onTap = { controlsVisible = !controlsVisible })
-                }
+                .pointerInput(Unit) { detectTapGestures(onTap = { controlsVisible = !controlsVisible }) }
         ) {
             AndroidView(
                 factory = {
@@ -205,9 +227,7 @@ fun VideoDetailScreen(
                         errorMessage = null
                         if (currentUrl.isNotBlank()) controller.play(currentUrl)
                         controlsVisible = true
-                    }) {
-                        Text("重试播放")
-                    }
+                    }) { Text("重试播放") }
                 }
             }
 
@@ -320,7 +340,7 @@ fun VideoDetailScreen(
                 Text(title, style = MaterialTheme.typography.titleLarge)
                 Text(desc, style = MaterialTheme.typography.bodyMedium)
                 Text(
-                    "默认画质：WLAN=${wlanQuality.label}，蜂窝=${mobileQuality.label}",
+                    "网络：$networkType，默认画质：WLAN=${wlanQuality.label}，蜂窝=${mobileQuality.label}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -329,6 +349,14 @@ fun VideoDetailScreen(
     }
 
     if (showSheet) {
+        val ordered = listOf(
+            VideoQuality.AUTO,
+            VideoQuality.P360,
+            VideoQuality.P480,
+            VideoQuality.P720,
+            VideoQuality.P1080
+        )
+
         ModalBottomSheet(onDismissRequest = { showSheet = false }) {
             Column(
                 modifier = Modifier
@@ -336,21 +364,22 @@ fun VideoDetailScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("选择清晰度（模拟）", style = MaterialTheme.typography.titleMedium)
-                sources.forEach { src ->
+                Text("选择清晰度", style = MaterialTheme.typography.titleMedium)
+
+                ordered.forEach { q ->
+                    val enabled = q == VideoQuality.AUTO || sources.containsKey(q.code) || playUrl.isNotBlank()
                     ListItem(
-                        headlineContent = { Text(src.quality.label) },
+                        headlineContent = { Text(q.label) },
                         trailingContent = {
                             RadioButton(
-                                selected = selectedQuality == src.quality,
+                                selected = (selectedQuality == q),
                                 onClick = {
-                                    selectedQuality = src.quality
-                                    currentUrl = src.url
-                                    errorMessage = null
-                                    controller.play(src.url)
+                                    selectedQuality = q
+                                    playByQuality(q)
                                     showSheet = false
                                     controlsVisible = true
-                                }
+                                },
+                                enabled = enabled
                             )
                         }
                     )

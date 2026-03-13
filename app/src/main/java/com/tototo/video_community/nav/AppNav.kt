@@ -101,6 +101,7 @@ fun AppNav(
                 coverUrl = video?.coverUrl.orEmpty(),
                 playUrl = video?.playUrl.orEmpty(),
                 desc = video?.desc.orEmpty(),
+                sources = video?.sources ?: emptyMap(),
                 onBack = { appNavController.popBackStack() }
             )
         }

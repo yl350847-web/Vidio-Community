@@ -8,7 +8,8 @@ data class VideoDto(
     val title: String,
     val coverUrl: String,
     val playUrl: String,
-    val desc: String
+    val desc: String,
+    val sources: Map<String, String> = emptyMap()
 )
 
 @Serializable

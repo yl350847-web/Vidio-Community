@@ -9,7 +9,6 @@ class VideoRepository(
     private val context: Context
 ) {
     private val json = Json { ignoreUnknownKeys = true }
-
     private var cachedList: List<VideoDto>? = null
 
     fun getAll(): List<VideoDto> {

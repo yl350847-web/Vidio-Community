@@ -15,6 +15,7 @@ import com.tototo.video_community.data.local.ThemePreferenceRepository
 import com.tototo.video_community.data.local.VideoPreferencesRepository
 import com.tototo.video_community.data.repository.VideoRepository
 import com.tototo.video_community.features.setting.SettingsViewModel
+import com.tototo.video_community.ui.util.NetworkMonitor
 import com.tototo.video_community.ui.viewmodel.ThemeViewModel
 
 val appModule = module {
@@ -25,6 +26,7 @@ val appModule = module {
     single { ThemePreferenceRepository(androidContext()) }
     single { VideoPreferencesRepository(androidContext()) }
     single { VideoRepository (androidContext()) }
+    single { NetworkMonitor(androidContext()) }
 }
 
 val viewModelModule = module {
