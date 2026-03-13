@@ -241,7 +241,10 @@ private fun MainNavHost(
         startDestination = MainRoute.Home
     ) {
         composable(MainRoute.Home) {
-            HomeScreen(onNavigateToSearch = onNavigateToSearchWithQuery)
+            HomeScreen(
+                onNavigateToSearch = onNavigateToSearchWithQuery,
+                onNavigateToVideoDetail = onNavigateToVideoDetail
+            )
         }
         composable(MainRoute.Subscription) {
             SubscriptionScreen(onNavigateToVideoDetail = onNavigateToVideoDetail)

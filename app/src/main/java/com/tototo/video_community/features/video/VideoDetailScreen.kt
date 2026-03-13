@@ -2,15 +2,23 @@ package com.tototo.video_community.features.video
 
 import android.app.Activity
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.rounded.Fullscreen
+import androidx.compose.material.icons.rounded.FullscreenExit
+import androidx.compose.material.icons.rounded.Pause
+import androidx.compose.material.icons.rounded.PlayArrow
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,22 +28,22 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.PlaybackException
@@ -52,6 +60,8 @@ import org.koin.androidx.compose.koinViewModel
 fun VideoDetailScreen(
     title: String,
     coverUrl: String,
+    playUrl: String,
+    desc: String,
     onBack: () -> Unit,
     settingsViewModel: SettingsViewModel = koinViewModel()
 ) {
@@ -67,6 +77,8 @@ fun VideoDetailScreen(
     var showSheet by remember { mutableStateOf(false) }
     var selectedQuality by remember { mutableStateOf(VideoQuality.P720) }
     var isFullscreen by remember { mutableStateOf(false) }
+    var controlsVisible by remember { mutableStateOf(true) }
+    var isPlaying by remember { mutableStateOf(false) }
 
     var durationMs by remember { mutableLongStateOf(0L) }
     var positionMs by remember { mutableLongStateOf(0L) }
@@ -75,12 +87,16 @@ fun VideoDetailScreen(
 
     var isBuffering by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-    var currentUrl by remember { mutableStateOf("") }
+    var currentUrl by remember { mutableStateOf(playUrl) }
 
     DisposableEffect(Unit) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 isBuffering = playbackState == Player.STATE_BUFFERING
+            }
+
+            override fun onIsPlayingChanged(isPlayingNow: Boolean) {
+                isPlaying = isPlayingNow
             }
 
             override fun onPlayerError(error: PlaybackException) {
@@ -98,18 +114,20 @@ fun VideoDetailScreen(
         }
     }
 
-    LaunchedEffect(wlanQuality) {
+    LaunchedEffect(playUrl, wlanQuality) {
+        if (playUrl.isBlank()) return@LaunchedEffect
         val q = if (wlanQuality == VideoQuality.AUTO) VideoQuality.P720 else wlanQuality
         selectedQuality = q
-        val url = sources.firstOrNull { it.quality == q }?.url ?: sources.first().url
-        currentUrl = url
+        currentUrl = playUrl
         errorMessage = null
-        controller.play(url)
+        controller.play(playUrl)
+        controlsVisible = true
     }
 
     BackHandler(enabled = isFullscreen) {
         SystemUiUtil.exitFullScreen(activity)
         isFullscreen = false
+        controlsVisible = true
     }
 
     LaunchedEffect(controller.player) {
@@ -126,107 +144,186 @@ fun VideoDetailScreen(
         }
     }
 
-    Scaffold(
-        topBar = {
-            if (!isFullscreen) {
-                TopAppBar(
-                    title = { Text("视频详情") },
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
-                        }
-                    }
-                )
-            }
+    LaunchedEffect(isPlaying, isFullscreen, showSheet) {
+        if (!isPlaying) return@LaunchedEffect
+        if (showSheet) return@LaunchedEffect
+        if (!controlsVisible) return@LaunchedEffect
+        delay(2500)
+        if (isPlaying && !showSheet) {
+            controlsVisible = false
         }
-    ) { innerPadding ->
+    }
+
+    if (title.isBlank() || playUrl.isBlank()) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            if (!isFullscreen) {
-                Text(title.ifBlank { "未命名视频" }, style = MaterialTheme.typography.titleLarge)
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                IconButton(onClick = onBack) {
+                    Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
+                }
+                Text("视频详情", style = MaterialTheme.typography.titleLarge)
             }
+            Text("找不到该视频数据", style = MaterialTheme.typography.titleMedium)
+            Button(onClick = onBack) { Text("返回") }
+        }
+        return
+    }
 
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = (if (isFullscreen) Modifier.fillMaxSize() else Modifier.fillMaxWidth().height(220.dp))
+                .pointerInput(Unit) {
+                    detectTapGestures(onTap = { controlsVisible = !controlsVisible })
+                }
+        ) {
             AndroidView(
                 factory = {
                     PlayerView(it).apply {
                         player = controller.player
-                        useController = true
+                        useController = false
                     }
                 },
-                modifier = if (isFullscreen) {
-                    Modifier.fillMaxSize()
-                } else {
-                    Modifier
-                        .fillMaxWidth()
-                        .height(220.dp)
-                }
+                modifier = Modifier.fillMaxSize()
             )
 
-            if (!isFullscreen) {
-                if (isBuffering) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        CircularProgressIndicator()
-                        Text("缓冲中…", style = MaterialTheme.typography.bodyMedium)
+            if (errorMessage != null) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("错误：${errorMessage ?: ""}")
+                    Button(onClick = {
+                        errorMessage = null
+                        if (currentUrl.isNotBlank()) controller.play(currentUrl)
+                        controlsVisible = true
+                    }) {
+                        Text("重试播放")
                     }
                 }
+            }
 
-                if (errorMessage != null) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("错误：${errorMessage ?: ""}")
-                        Button(onClick = {
-                            errorMessage = null
-                            if (currentUrl.isNotBlank()) controller.play(currentUrl)
+            if (isBuffering) {
+                CircularProgressIndicator(modifier = Modifier.padding(16.dp))
+            }
+
+            if (controlsVisible) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(8.dp),
+                    verticalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        IconButton(onClick = {
+                            if (isFullscreen) {
+                                SystemUiUtil.exitFullScreen(activity)
+                                isFullscreen = false
+                            } else {
+                                onBack()
+                            }
+                            controlsVisible = true
                         }) {
-                            Text("重试播放")
+                            Icon(Icons.AutoMirrored.Rounded.ArrowBack, contentDescription = "返回")
+                        }
+                        Text(
+                            text = title,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(top = 10.dp),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                        IconButton(onClick = {
+                            showSheet = true
+                            controlsVisible = true
+                        }) {
+                            Icon(Icons.Rounded.Settings, contentDescription = "清晰度")
+                        }
+                        IconButton(onClick = {
+                            if (isFullscreen) {
+                                SystemUiUtil.exitFullScreen(activity)
+                                isFullscreen = false
+                            } else {
+                                SystemUiUtil.enterFullScreen(activity)
+                                isFullscreen = true
+                            }
+                            controlsVisible = true
+                        }) {
+                            Icon(
+                                if (isFullscreen) Icons.Rounded.FullscreenExit else Icons.Rounded.Fullscreen,
+                                contentDescription = "全屏"
+                            )
                         }
                     }
-                }
 
+                    Column(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            IconButton(onClick = {
+                                if (isPlaying) controller.pause() else controller.player.play()
+                                controlsVisible = true
+                            }) {
+                                Icon(
+                                    if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
+                                    contentDescription = "播放暂停"
+                                )
+                            }
+                            Text("${formatMs(positionMs)} / ${formatMs(durationMs)}")
+                            Spacer(modifier = Modifier.height(1.dp))
+                        }
+
+                        Slider(
+                            value = sliderValue,
+                            onValueChange = {
+                                isUserDragging = true
+                                sliderValue = it
+                                controlsVisible = true
+                            },
+                            onValueChangeFinished = {
+                                isUserDragging = false
+                                if (durationMs > 0) {
+                                    val target = (durationMs * sliderValue).toLong()
+                                    controller.player.seekTo(target)
+                                }
+                                controlsVisible = true
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        if (!isFullscreen) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(title, style = MaterialTheme.typography.titleLarge)
+                Text(desc, style = MaterialTheme.typography.bodyMedium)
                 Text(
                     "默认画质：WLAN=${wlanQuality.label}，蜂窝=${mobileQuality.label}",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Slider(
-                        value = sliderValue,
-                        onValueChange = {
-                            isUserDragging = true
-                            sliderValue = it
-                        },
-                        onValueChangeFinished = {
-                            isUserDragging = false
-                            if (durationMs > 0) {
-                                val target = (durationMs * sliderValue).toLong()
-                                controller.player.seekTo(target)
-                            }
-                        }
-                    )
-                    Text(
-                        "进度：${formatMs(positionMs)} / ${formatMs(durationMs)}",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Button(onClick = { showSheet = true }) {
-                        Text("清晰度：${selectedQuality.label}")
-                    }
-                    Button(onClick = {
-                        SystemUiUtil.enterFullScreen(activity)
-                        isFullscreen = true
-                    }) {
-                        Text("全屏")
-                    }
-                    Button(onClick = { controller.pause() }) {
-                        Text("暂停")
-                    }
-                }
             }
         }
     }
@@ -239,8 +336,7 @@ fun VideoDetailScreen(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Text("选择清晰度", style = MaterialTheme.typography.titleMedium)
-
+                Text("选择清晰度（模拟）", style = MaterialTheme.typography.titleMedium)
                 sources.forEach { src ->
                     ListItem(
                         headlineContent = { Text(src.quality.label) },
@@ -253,6 +349,7 @@ fun VideoDetailScreen(
                                     errorMessage = null
                                     controller.play(src.url)
                                     showSheet = false
+                                    controlsVisible = true
                                 }
                             )
                         }

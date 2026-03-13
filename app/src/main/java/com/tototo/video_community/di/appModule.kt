@@ -19,8 +19,8 @@ import com.tototo.video_community.ui.viewmodel.ThemeViewModel
 
 val appModule = module {
     single { FakeHomeRepository() }
-    single { FakeSearchRepository() }
-    single { FakeSubscriptionRepository() }
+    single { FakeSearchRepository(get()) }
+    single { FakeSubscriptionRepository(get()) }
     single { SearchHistoryRepository(androidContext()) }
     single { ThemePreferenceRepository(androidContext()) }
     single { VideoPreferencesRepository(androidContext()) }

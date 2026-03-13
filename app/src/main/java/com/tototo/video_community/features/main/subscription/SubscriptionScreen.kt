@@ -75,10 +75,10 @@ fun SubscriptionScreen(
                             if (item != null) {
                                 GridItemCard(
                                     title = item.title,
-                                    imageUrl = item.imageUrl,
+                                    imageUrl = item.coverUrl,
                                     onClick = {
                                         val route =
-                                            "${AppRoute.VideoDetail}?title=${Uri.encode(item.title)}&cover=${Uri.encode(item.imageUrl)}"
+                                            "${AppRoute.VideoDetail}?id=${Uri.encode(item.id)}"
                                         onNavigateToVideoDetail(route)
                                     }
                                 )

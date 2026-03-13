@@ -11,7 +11,9 @@ import kotlinx.coroutines.launch
 import com.tototo.video_community.data.repository.FakeSearchRepository
 import com.tototo.video_community.data.repository.SearchItem
 import com.tototo.video_community.data.local.SearchHistoryRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SearchViewModel(
     private val repo: FakeSearchRepository,
     private val historyRepo: SearchHistoryRepository

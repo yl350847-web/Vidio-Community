@@ -4,11 +4,15 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 
 data class SearchItem(
+    val id: String,
     val title: String,
-    val desc: String
+    val desc: String,
+    val coverUrl: String
 )
 
-class FakeSearchRepository {
+class FakeSearchRepository(
+    private val videoRepository: VideoRepository
+) {
     fun pagerFor(query: String): Pager<Int, SearchItem> {
         return Pager(
             config = PagingConfig(
@@ -17,7 +21,7 @@ class FakeSearchRepository {
                 prefetchDistance = 10
             )
         ) {
-            FakeSearchPagingSource(query)
+            FakeSearchPagingSource(query, videoRepository)
         }
     }
 }

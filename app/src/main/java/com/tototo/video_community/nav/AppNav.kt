@@ -14,13 +14,13 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.tototo.video_community.AppState
+import com.tototo.video_community.data.repository.VideoRepository
 import com.tototo.video_community.features.login.LoginNav
 import com.tototo.video_community.features.main.MainNav
 import com.tototo.video_community.features.search.SearchScreen
 import com.tototo.video_community.features.setting.SettingScreen
 import com.tototo.video_community.features.splash.SplashScreen
 import com.tototo.video_community.features.video.VideoDetailScreen
-import com.tototo.video_community.data.repository.VideoRepository
 import org.koin.compose.koinInject
 
 @Composable
@@ -74,7 +74,10 @@ fun AppNav(
             )
         ) { backStackEntry ->
             val query = backStackEntry.arguments?.getString("q").orEmpty()
-            SearchScreen(initialQuery = query)
+            SearchScreen(
+                initialQuery = query,
+                onNavigateToVideoDetail = { route -> appNavController.navigate(route) }
+            )
         }
 
         composable(AppRoute.Setting) {
@@ -92,9 +95,12 @@ fun AppNav(
         ) { backStackEntry ->
             val id = backStackEntry.arguments?.getString("id").orEmpty()
             val video = videoRepo.getById(id)
+
             VideoDetailScreen(
                 title = video?.title.orEmpty(),
                 coverUrl = video?.coverUrl.orEmpty(),
+                playUrl = video?.playUrl.orEmpty(),
+                desc = video?.desc.orEmpty(),
                 onBack = { appNavController.popBackStack() }
             )
         }

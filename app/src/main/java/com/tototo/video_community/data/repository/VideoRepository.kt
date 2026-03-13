@@ -10,12 +10,22 @@ class VideoRepository(
 ) {
     private val json = Json { ignoreUnknownKeys = true }
 
+    private var cachedList: List<VideoDto>? = null
+
     fun getAll(): List<VideoDto> {
+        val cached = cachedList
+        if (cached != null) return cached
         val text = context.assets.open("videos.json").bufferedReader().use { it.readText() }
-        return json.decodeFromString(VideoListDto.serializer(), text).videos
+        val list = json.decodeFromString(VideoListDto.serializer(), text).videos
+        cachedList = list
+        return list
     }
 
     fun getById(id: String): VideoDto? {
         return getAll().firstOrNull { it.id == id }
+    }
+
+    fun invalidateCache() {
+        cachedList = null
     }
 }

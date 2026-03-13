@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedButton
@@ -22,16 +23,23 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
+import coil3.compose.AsyncImage
+import com.tototo.video_community.nav.AppRoute
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import org.koin.androidx.compose.koinViewModel
+import android.net.Uri
+import kotlinx.coroutines.FlowPreview
 
+@OptIn(FlowPreview::class)
 @Composable
 fun SearchScreen(
     initialQuery: String,
+    onNavigateToVideoDetail: (String) -> Unit = {},
     viewModel: SearchViewModel = koinViewModel()
 ) {
     val input = remember { mutableStateOf(initialQuery) }
@@ -112,8 +120,19 @@ fun SearchScreen(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .clickable { }
+                                    .clickable {
+                                        val route = "${AppRoute.VideoDetail}?id=${Uri.encode(item.id)}"
+                                        onNavigateToVideoDetail(route)
+                                    }
                             ) {
+                                AsyncImage(
+                                    model = item.coverUrl,
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(160.dp),
+                                    contentScale = ContentScale.Crop
+                                )
                                 Text(item.title)
                                 Text(item.desc)
                             }
